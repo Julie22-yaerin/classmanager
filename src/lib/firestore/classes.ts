@@ -22,9 +22,7 @@ export async function getClass(uid: string, classId: string): Promise<ClassDoc |
 }
 
 export interface CreateClassInput {
-  teacherId: string;
   teacherName: string;
-  teacherSubject: string;
   grade: string;
   subject: string;
   textbook: string | null;
@@ -93,6 +91,7 @@ export async function savePlaybook(uid: string, classId: string, playbook: Teach
 }
 
 export interface UpdateClassInput {
+  teacherName: string;
   grade: string;
   subject: string;
   textbook: string | null;

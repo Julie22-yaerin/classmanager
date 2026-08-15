@@ -3,7 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Every user's data lives under users/{uid} and its subcollections
-    // (teachers, classes, materials, messages, deadlines, examReports).
+    // (classes, materials, messages, deadlines, examReports, teacherSimulations).
     // A signed-in user may only read/write their own tree. Writes are also
     // capped in size so a compromised or malicious client can't stuff huge
     // blobs into Firestore directly (client SDK writes bypass the Next.js
@@ -21,12 +21,9 @@ service cloud.firestore {
     match /users/{uid} {
       allow read, write: if isOwner(uid) && withinSize('weaknesses', 5000) && withinSize('academicLevel', 1000);
 
-      match /teachers/{teacherId} {
-        allow read, write: if isOwner(uid) && withinSize('name', 200) && withinSize('subject', 200);
-      }
-
       match /classes/{classId} {
         allow read, write: if isOwner(uid) &&
+          withinSize('teacherName', 200) &&
           withinSize('curriculum', 20000) &&
           withinSize('teacherPersona', 5000) &&
           withinSize('teachingStyle', 5000) &&

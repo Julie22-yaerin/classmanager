@@ -1,7 +1,7 @@
 import { collection, deleteDoc, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-const SUBCOLLECTIONS = ["teachers", "classes", "materials", "messages", "deadlines", "examReports"] as const;
+const SUBCOLLECTIONS = ["classes", "materials", "messages", "deadlines", "examReports", "teacherSimulations"] as const;
 
 export async function exportAllUserData(uid: string): Promise<Record<string, unknown>> {
   const profileSnap = await getDoc(doc(db, "users", uid));
