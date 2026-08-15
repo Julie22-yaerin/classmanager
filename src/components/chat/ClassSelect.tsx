@@ -6,11 +6,30 @@ export default function ClassSelect({
   classes,
   value,
   onChange,
+  compact = false,
 }: {
   classes: ClassDTO[];
   value: string;
   onChange: (classId: string) => void;
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs font-medium text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+      >
+        <option value="auto">Auto-detect class</option>
+        {classes.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.subject} · Grade {c.grade} ({c.teacher.name})
+          </option>
+        ))}
+      </select>
+    );
+  }
+
   return (
     <label className="flex flex-col gap-1 text-xs text-zinc-500">
       Class

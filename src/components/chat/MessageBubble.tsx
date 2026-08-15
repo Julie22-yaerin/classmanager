@@ -1,5 +1,6 @@
 import { TAG_LABELS } from "@/lib/types";
 import type { ChatMessageDTO, ClassDTO } from "@/lib/clientTypes";
+import LaurelAvatar from "@/components/LaurelAvatar";
 
 export default function MessageBubble({
   message,
@@ -9,25 +10,29 @@ export default function MessageBubble({
   cls: ClassDTO | undefined;
 }) {
   const isUser = message.role === "user";
-  return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div
-        className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap ${
-          isUser
-            ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-            : "bg-white text-zinc-900 border border-zinc-200 dark:bg-zinc-900 dark:text-zinc-50 dark:border-zinc-800"
-        }`}
-      >
-        <div className="mb-1 flex flex-wrap gap-1.5 text-[11px] opacity-70">
-          {message.tag && <span className="rounded-full bg-black/10 px-2 py-0.5 dark:bg-white/10">{TAG_LABELS[message.tag]}</span>}
-          {cls && (
-            <span className="rounded-full bg-black/10 px-2 py-0.5 dark:bg-white/10">
-              {cls.subject} · {cls.teacher.name}
-            </span>
-          )}
-          {message.fileName && <span className="rounded-full bg-black/10 px-2 py-0.5 dark:bg-white/10">📎 {message.fileName}</span>}
+  const meta = [message.tag ? TAG_LABELS[message.tag] : null, cls ? `${cls.subject} · ${cls.teacher.name}` : null, message.fileName ? `📎 ${message.fileName}` : null]
+    .filter(Boolean)
+    .join("  ·  ");
+
+  if (isUser) {
+    return (
+      <div className="flex justify-end">
+        <div className="max-w-[75%]">
+          {meta && <div className="mb-1 text-right text-[11px] text-zinc-400 dark:text-zinc-500">{meta}</div>}
+          <div className="rounded-3xl bg-zinc-100 px-4 py-2.5 text-[15px] whitespace-pre-wrap text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50">
+            {message.content}
+          </div>
         </div>
-        {message.content}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-3">
+      <LaurelAvatar size={28} className="mt-0.5 shrink-0" />
+      <div className="min-w-0 flex-1 pt-0.5">
+        {meta && <div className="mb-1 text-[11px] text-zinc-400 dark:text-zinc-500">{meta}</div>}
+        <div className="text-[15px] leading-relaxed whitespace-pre-wrap text-zinc-800 dark:text-zinc-100">{message.content}</div>
       </div>
     </div>
   );
