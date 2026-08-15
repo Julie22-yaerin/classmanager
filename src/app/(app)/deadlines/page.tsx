@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/authContext";
 import { listDeadlines } from "@/lib/firestore/deadlines";
+import { connectGoogleCalendar, getValidCalendarToken } from "@/lib/googleCalendar";
 import DeadlineRow from "@/components/deadlines/DeadlineRow";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import type { DeadlineDoc } from "@/lib/firestore/types";
@@ -11,14 +13,29 @@ export default function DeadlinesPage() {
   const { user } = useAuth();
   const [deadlines, setDeadlines] = useState<DeadlineDoc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [calendarConnected, setCalendarConnected] = useState(false);
+  const [connecting, setConnecting] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       setDeadlines(await listDeadlines(user.uid));
+      setCalendarConnected(!!getValidCalendarToken());
       setLoading(false);
     })();
   }, [user]);
+
+  async function handleConnect() {
+    setConnecting(true);
+    try {
+      await connectGoogleCalendar();
+      setCalendarConnected(true);
+    } catch {
+      // Non-critical — the banner just stays up so they can retry.
+    } finally {
+      setConnecting(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -37,6 +54,28 @@ export default function DeadlinesPage() {
       <p className="mt-1 text-sm text-zinc-500">
         Extracted automatically from Teacher Announcements and Class Recordings across every class.
       </p>
+
+      {!calendarConnected && (
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <span className="text-zinc-600 dark:text-zinc-300">Not synced to a calendar yet.</span>
+          <button
+            onClick={handleConnect}
+            disabled={connecting}
+            className="shrink-0 rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50 dark:bg-white dark:text-zinc-900"
+          >
+            {connecting ? "Connecting…" : "Connect Google Calendar"}
+          </button>
+        </div>
+      )}
+      {calendarConnected && (
+        <p className="mt-4 text-xs text-zinc-500">
+          ✓ Google Calendar connected for this session — auto-sync toggle is in{" "}
+          <Link href="/settings" className="underline">
+            Settings
+          </Link>
+          .
+        </p>
+      )}
 
       <section className="mt-6">
         <h2 className="text-sm font-medium text-zinc-500">Open ({open.length})</h2>

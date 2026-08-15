@@ -1,5 +1,5 @@
 import { RESPOND_TOOL, type RespondToolInput } from "@/lib/respondTool";
-import { buildClassMemoryContext, buildStudentProfileContext, type ClassContextInput, type ProfileContextInput } from "@/lib/aiContext";
+import { CORE_PERSONA, buildClassMemoryContext, buildStudentProfileContext, type ClassContextInput, type ProfileContextInput } from "@/lib/aiContext";
 import { extractFromDocument } from "@/lib/perception";
 import { TAG_INSTRUCTIONS } from "@/lib/processors/instructions";
 import { structuredCompletion, type TokenUsage } from "@/lib/harness";
@@ -62,8 +62,8 @@ export async function runChatCompletion(input: RunChatInput): Promise<RunChatRes
   }
 
   const systemPrompt = [
-    "You are the class-specific AI inside a school assistant. Every reply must be grounded in the class memory and student " +
-      "profile below — this is what makes the AI feel like it actually knows this student's teachers and classes.",
+    CORE_PERSONA,
+    "Ground every reply in the class memory and student profile below — that's what makes this feel like it actually knows this student's teachers and classes, not a generic answer.",
     MODE_FRAMING[input.mode],
     ...instructionParts,
     PROMPT_INJECTION_GUARD,

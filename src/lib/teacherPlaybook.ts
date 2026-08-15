@@ -1,5 +1,5 @@
 import type OpenAI from "openai";
-import { buildClassMemoryContext, type ClassContextInput } from "@/lib/aiContext";
+import { CORE_PERSONA, buildClassMemoryContext, type ClassContextInput } from "@/lib/aiContext";
 import { structuredCompletion, type TokenUsage } from "@/lib/harness";
 import type { MaterialSummary } from "@/lib/examMode";
 
@@ -50,6 +50,7 @@ export interface GeneratePlaybookInput {
 
 export async function generateTeacherPlaybook(input: GeneratePlaybookInput): Promise<{ playbook: TeacherPlaybookOutput; usage: TokenUsage }> {
   const system = [
+    CORE_PERSONA,
     "You analyze everything known about a teacher — how they ask questions, explain concepts, grade, and run their classroom — " +
       "and produce an actionable playbook for the student. This is strategy, not gossip: concrete moves the student can make.",
     "If there isn't enough evidence for a section yet, say so plainly instead of inventing detail.",

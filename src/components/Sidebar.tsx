@@ -12,6 +12,7 @@ const LINKS = [
   { href: "/daily", label: "Daily" },
   { href: "/setup", label: "Teachers & Classes" },
   { href: "/deadlines", label: "Deadlines" },
+  { href: "/profile", label: "Profile" },
   { href: "/settings", label: "Settings" },
 ];
 

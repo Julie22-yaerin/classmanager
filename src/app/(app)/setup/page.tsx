@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/authContext";
-import { listTeachers, createTeacher as createTeacherDoc } from "@/lib/firestore/teachers";
-import { listClasses, createClass as createClassDoc } from "@/lib/firestore/classes";
+import { listTeachers, createTeacher as createTeacherDoc, updateTeacher, deleteTeacher } from "@/lib/firestore/teachers";
+import { listClasses, createClass as createClassDoc, updateClassBasics, deleteClass } from "@/lib/firestore/classes";
 import type { Teacher, ClassDoc } from "@/lib/firestore/types";
 
 export default function SetupPage() {
@@ -24,6 +24,17 @@ export default function SetupPage() {
   const [classBusy, setClassBusy] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
+
+  const [editingTeacherId, setEditingTeacherId] = useState<string | null>(null);
+  const [editTeacherName, setEditTeacherName] = useState("");
+  const [editTeacherSubject, setEditTeacherSubject] = useState("");
+  const [confirmDeleteTeacherId, setConfirmDeleteTeacherId] = useState<string | null>(null);
+
+  const [editingClassId, setEditingClassId] = useState<string | null>(null);
+  const [editClassGrade, setEditClassGrade] = useState("");
+  const [editClassSubject, setEditClassSubject] = useState("");
+  const [editClassTextbook, setEditClassTextbook] = useState("");
+  const [confirmDeleteClassId, setConfirmDeleteClassId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!user) return;
@@ -83,6 +94,78 @@ export default function SetupPage() {
     }
   }
 
+  function startEditTeacher(t: Teacher) {
+    setEditingTeacherId(t.id);
+    setEditTeacherName(t.name);
+    setEditTeacherSubject(t.subject);
+    setConfirmDeleteTeacherId(null);
+  }
+
+  async function saveTeacherEdit(teacherId: string) {
+    if (!user) return;
+    setError(null);
+    try {
+      await updateTeacher(user.uid, teacherId, { name: editTeacherName.trim(), subject: editTeacherSubject.trim() });
+      setEditingTeacherId(null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update teacher");
+    }
+  }
+
+  async function confirmDeleteTeacher(teacherId: string) {
+    if (!user) return;
+    if (classes.some((c) => c.teacherId === teacherId)) {
+      setError("Can't delete a teacher who still has classes — delete or reassign those classes first.");
+      setConfirmDeleteTeacherId(null);
+      return;
+    }
+    setError(null);
+    try {
+      await deleteTeacher(user.uid, teacherId);
+      setConfirmDeleteTeacherId(null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete teacher");
+    }
+  }
+
+  function startEditClass(c: ClassDoc) {
+    setEditingClassId(c.id);
+    setEditClassGrade(c.grade);
+    setEditClassSubject(c.subject);
+    setEditClassTextbook(c.textbook ?? "");
+    setConfirmDeleteClassId(null);
+  }
+
+  async function saveClassEdit(classId: string) {
+    if (!user) return;
+    setError(null);
+    try {
+      await updateClassBasics(user.uid, classId, {
+        grade: editClassGrade.trim(),
+        subject: editClassSubject.trim(),
+        textbook: editClassTextbook.trim() || null,
+      });
+      setEditingClassId(null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update class");
+    }
+  }
+
+  async function confirmDeleteClass(classId: string) {
+    if (!user) return;
+    setError(null);
+    try {
+      await deleteClass(user.uid, classId);
+      setConfirmDeleteClassId(null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete class");
+    }
+  }
+
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
       <h1 className="text-xl font-semibold">Teachers &amp; Classes</h1>
@@ -130,12 +213,56 @@ export default function SetupPage() {
           </form>
 
           <ul className="mt-4 flex flex-col gap-1 text-sm">
-            {teachers.map((t) => (
-              <li key={t.id} className="flex justify-between rounded-md px-2 py-1 hover:bg-zinc-50 dark:hover:bg-zinc-800">
-                <span>{t.name}</span>
-                <span className="text-zinc-500">{t.subject}</span>
-              </li>
-            ))}
+            {teachers.map((t) =>
+              editingTeacherId === t.id ? (
+                <li key={t.id} className="flex flex-col gap-1.5 rounded-md bg-zinc-50 px-2 py-2 dark:bg-zinc-800">
+                  <input
+                    value={editTeacherName}
+                    onChange={(e) => setEditTeacherName(e.target.value)}
+                    className="rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                  />
+                  <input
+                    value={editTeacherSubject}
+                    onChange={(e) => setEditTeacherSubject(e.target.value)}
+                    className="rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={() => saveTeacherEdit(t.id)} className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white dark:bg-white dark:text-zinc-900">
+                      Save
+                    </button>
+                    <button onClick={() => setEditingTeacherId(null)} className="text-xs text-zinc-500 hover:underline">
+                      Cancel
+                    </button>
+                  </div>
+                </li>
+              ) : (
+                <li key={t.id} className="group flex items-center justify-between gap-2 rounded-md px-2 py-1 hover:bg-zinc-50 dark:hover:bg-zinc-800">
+                  <span>{t.name}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-zinc-500">{t.subject}</span>
+                    {confirmDeleteTeacherId === t.id ? (
+                      <span className="flex gap-1.5">
+                        <button onClick={() => confirmDeleteTeacher(t.id)} className="text-xs font-medium text-red-600 hover:underline dark:text-red-400">
+                          Confirm?
+                        </button>
+                        <button onClick={() => setConfirmDeleteTeacherId(null)} className="text-xs text-zinc-500 hover:underline">
+                          No
+                        </button>
+                      </span>
+                    ) : (
+                      <span className="flex gap-1.5 opacity-0 group-hover:opacity-100">
+                        <button onClick={() => startEditTeacher(t)} className="text-xs text-zinc-500 hover:underline">
+                          Edit
+                        </button>
+                        <button onClick={() => setConfirmDeleteTeacherId(t.id)} className="text-xs text-red-600 hover:underline dark:text-red-400">
+                          Delete
+                        </button>
+                      </span>
+                    )}
+                  </span>
+                </li>
+              ),
+            )}
             {!loading && teachers.length === 0 && <li className="text-zinc-500">No teachers yet.</li>}
           </ul>
         </section>
@@ -203,13 +330,65 @@ export default function SetupPage() {
           </form>
 
           <ul className="mt-4 flex flex-col gap-1 text-sm">
-            {classes.map((c) => (
-              <li key={c.id} className="flex items-center justify-between rounded-md px-2 py-1 hover:bg-zinc-50 dark:hover:bg-zinc-800">
-                <Link href={`/classes/${c.id}`} className="hover:underline">
-                  {c.subject} · Grade {c.grade} — {c.teacherName}
-                </Link>
-              </li>
-            ))}
+            {classes.map((c) =>
+              editingClassId === c.id ? (
+                <li key={c.id} className="flex flex-col gap-1.5 rounded-md bg-zinc-50 px-2 py-2 dark:bg-zinc-800">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <input
+                      value={editClassGrade}
+                      onChange={(e) => setEditClassGrade(e.target.value)}
+                      placeholder="Grade"
+                      className="rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                    />
+                    <input
+                      value={editClassSubject}
+                      onChange={(e) => setEditClassSubject(e.target.value)}
+                      placeholder="Subject"
+                      className="rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                    />
+                  </div>
+                  <input
+                    value={editClassTextbook}
+                    onChange={(e) => setEditClassTextbook(e.target.value)}
+                    placeholder="Textbook"
+                    className="rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={() => saveClassEdit(c.id)} className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white dark:bg-white dark:text-zinc-900">
+                      Save
+                    </button>
+                    <button onClick={() => setEditingClassId(null)} className="text-xs text-zinc-500 hover:underline">
+                      Cancel
+                    </button>
+                  </div>
+                </li>
+              ) : (
+                <li key={c.id} className="group flex items-center justify-between gap-2 rounded-md px-2 py-1 hover:bg-zinc-50 dark:hover:bg-zinc-800">
+                  <Link href={`/classes/${c.id}`} className="hover:underline">
+                    {c.subject} · Grade {c.grade} — {c.teacherName}
+                  </Link>
+                  {confirmDeleteClassId === c.id ? (
+                    <span className="flex shrink-0 gap-1.5">
+                      <button onClick={() => confirmDeleteClass(c.id)} className="text-xs font-medium text-red-600 hover:underline dark:text-red-400">
+                        Delete everything?
+                      </button>
+                      <button onClick={() => setConfirmDeleteClassId(null)} className="text-xs text-zinc-500 hover:underline">
+                        No
+                      </button>
+                    </span>
+                  ) : (
+                    <span className="flex shrink-0 gap-1.5 opacity-0 group-hover:opacity-100">
+                      <button onClick={() => startEditClass(c)} className="text-xs text-zinc-500 hover:underline">
+                        Edit
+                      </button>
+                      <button onClick={() => setConfirmDeleteClassId(c.id)} className="text-xs text-red-600 hover:underline dark:text-red-400">
+                        Delete
+                      </button>
+                    </span>
+                  )}
+                </li>
+              ),
+            )}
             {!loading && classes.length === 0 && <li className="text-zinc-500">No classes yet.</li>}
           </ul>
         </section>

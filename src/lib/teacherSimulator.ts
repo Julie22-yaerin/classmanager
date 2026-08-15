@@ -1,5 +1,5 @@
 import type OpenAI from "openai";
-import { buildClassMemoryContext, buildStudentProfileContext, type ClassContextInput, type ProfileContextInput } from "@/lib/aiContext";
+import { CORE_PERSONA, buildClassMemoryContext, buildStudentProfileContext, type ClassContextInput, type ProfileContextInput } from "@/lib/aiContext";
 import { structuredCompletion, type TokenUsage } from "@/lib/harness";
 import type { MaterialSummary } from "@/lib/examMode";
 
@@ -88,6 +88,7 @@ export async function generateTeacherSimulation(
   input: GenerateTeacherSimulationInput,
 ): Promise<{ simulation: TeacherSimulationOutput; usage: TokenUsage }> {
   const system = [
+    CORE_PERSONA,
     "You simulate a specific teacher's pattern for one student, so they can stop guessing and spend study time where it actually pays off.",
     "Two ground rules, always: (1) you are an informed pattern-matcher, never a source of certainty about the future — say so in your reasoning and caveats, never claim to know what will literally happen.",
     "(2) The study plan must be ranked by return on time invested — highest mark impact for the least time first, not just 'do everything'.",

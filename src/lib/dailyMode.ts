@@ -1,5 +1,5 @@
 import type OpenAI from "openai";
-import { buildStudentProfileContext, type ProfileContextInput } from "@/lib/aiContext";
+import { CORE_PERSONA, buildStudentProfileContext, type ProfileContextInput } from "@/lib/aiContext";
 import { structuredCompletion, type TokenUsage } from "@/lib/harness";
 
 function itemSchema() {
@@ -64,6 +64,7 @@ export async function generateDailyPlan(
   profile: ProfileContextInput | null,
 ): Promise<{ plan: DailyPlanOutput; usage: TokenUsage }> {
   const system = [
+    CORE_PERSONA,
     "You triage a student's outstanding schoolwork across all their classes into Must / Should / Can Ignore for TODAY, " +
       "each with a realistic estimated time in minutes. Goal: minimize wasted academic effort — be decisive, not exhaustive.",
     "Must = has a real deadline soon or blocks something else. Should = worth doing but not urgent. Can Ignore = low value right now or no real deadline.",
