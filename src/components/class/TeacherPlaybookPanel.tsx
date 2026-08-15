@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/lib/authContext";
-import { callApi, MissingApiKeyClientError } from "@/lib/apiClient";
+import { callApi } from "@/lib/apiClient";
 import { toClassContext } from "@/lib/mappers";
 import { listMaterialsForClass } from "@/lib/firestore/materials";
 import { savePlaybook } from "@/lib/firestore/classes";
@@ -22,13 +22,11 @@ export default function TeacherPlaybookPanel({ cls, onSaved }: { cls: ClassDoc; 
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [missingKey, setMissingKey] = useState(false);
 
   async function generate() {
     if (!user) return;
     setBusy(true);
     setError(null);
-    setMissingKey(false);
     try {
       const materials = await listMaterialsForClass(user.uid, cls.id);
       const { playbook } = await callApi<{ playbook: TeacherPlaybookOutput }>("/api/teacher-playbook", {
@@ -48,12 +46,7 @@ export default function TeacherPlaybookPanel({ cls, onSaved }: { cls: ClassDoc; 
       await savePlaybook(user.uid, cls.id, saved);
       onSaved(saved);
     } catch (err) {
-      if (err instanceof MissingApiKeyClientError) {
-        setMissingKey(true);
-        setError(err.message);
-      } else {
-        setError(err instanceof Error ? err.message : "Failed to generate playbook");
-      }
+      setError(err instanceof Error ? err.message : "Failed to generate playbook");
     } finally {
       setBusy(false);
     }
@@ -76,11 +69,7 @@ export default function TeacherPlaybookPanel({ cls, onSaved }: { cls: ClassDoc; 
           {busy ? "Analyzing…" : playbook ? "Refresh" : "Generate playbook"}
         </button>
       </div>
-      {error && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-          {error} {missingKey && "(the app's AI key isn't configured — this is on us, not you)"}
-        </p>
-      )}
+      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       {!playbook && !busy && <p className="mt-3 text-sm text-zinc-500">No playbook generated yet.</p>}
       {playbook && (
         <div className="mt-4 flex flex-col gap-4 text-sm">

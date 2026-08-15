@@ -12,7 +12,7 @@ import ClassMemoryPanel from "@/components/class/ClassMemoryPanel";
 import MaterialsList from "@/components/class/MaterialsList";
 import ExamModePanel from "@/components/class/ExamModePanel";
 import TeacherPlaybookPanel from "@/components/class/TeacherPlaybookPanel";
-import LaurelAvatar from "@/components/LaurelAvatar";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import type { ClassDoc, MaterialDoc, DeadlineDoc, ExamReportDoc } from "@/lib/firestore/types";
 
 export default function ClassDetailPage() {
@@ -50,7 +50,7 @@ export default function ClassDetailPage() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <LaurelAvatar size={40} className="animate-pulse" />
+        <LoadingSpinner />
       </div>
     );
   }

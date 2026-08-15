@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/authContext";
 import { getUserProfile } from "@/lib/firestore/profile";
-import LaurelAvatar from "@/components/LaurelAvatar";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -30,7 +30,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   if (loading || !user || checkingOnboarding) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <LaurelAvatar size={40} className="animate-pulse" />
+        <LoadingSpinner />
       </div>
     );
   }

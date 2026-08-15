@@ -5,11 +5,13 @@ import { MissingApiKeyError } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { logSecurityEvent } from "@/lib/securityLog";
 import { requireReasonableBody } from "@/lib/requestGuard";
+import { enforceQuota, trackUsage } from "@/lib/quota";
 
 export async function POST(req: NextRequest) {
   let uid: string;
+  let idToken: string;
   try {
-    uid = await verifyIdToken(req.headers.get("authorization"));
+    ({ uid, idToken } = await verifyIdToken(req.headers.get("authorization")));
   } catch (err) {
     if (err instanceof InvalidAuthError) return NextResponse.json({ error: err.message }, { status: 401 });
     throw err;
@@ -24,11 +26,15 @@ export async function POST(req: NextRequest) {
   const tooLarge = requireReasonableBody(req);
   if (tooLarge) return tooLarge;
 
+  const overQuota = await enforceQuota(idToken, uid);
+  if (overQuota) return overQuota;
+
   try {
     const body = (await req.json()) as GeneratePlaybookInput;
     if (!body.cls) return NextResponse.json({ error: "Class context is required" }, { status: 400 });
 
-    const playbook = await generateTeacherPlaybook(body);
+    const { playbook, usage } = await generateTeacherPlaybook(body);
+    await trackUsage(idToken, uid, usage);
     return NextResponse.json({ playbook });
   } catch (err) {
     if (err instanceof MissingApiKeyError) {

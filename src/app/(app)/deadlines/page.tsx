@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/authContext";
 import { listDeadlines } from "@/lib/firestore/deadlines";
 import DeadlineRow from "@/components/deadlines/DeadlineRow";
-import LaurelAvatar from "@/components/LaurelAvatar";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import type { DeadlineDoc } from "@/lib/firestore/types";
 
 export default function DeadlinesPage() {
@@ -23,7 +23,7 @@ export default function DeadlinesPage() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <LaurelAvatar size={40} className="animate-pulse" />
+        <LoadingSpinner />
       </div>
     );
   }
