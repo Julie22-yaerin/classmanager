@@ -121,3 +121,13 @@ export interface ExamReportDoc {
   reviewSheet: string;
   createdAt: string;
 }
+
+export interface TeacherSimulationDoc {
+  id: string;
+  classId: string;
+  nextSessionPrediction: { likelyFocus: string[]; reasoning: string };
+  likelyQuestions: { question: string; topic: string; styleNote: string }[];
+  studyPlan: { action: string; topic: string; estimatedMinutes: number; markImpact: "high" | "medium" | "low"; reason: string }[];
+  projectedScore: { baselineLow: number; baselineHigh: number; projectedLow: number; projectedHigh: number; caveat: string };
+  createdAt: string;
+}

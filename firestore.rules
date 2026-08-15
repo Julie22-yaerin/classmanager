@@ -51,6 +51,10 @@ service cloud.firestore {
       match /examReports/{reportId} {
         allow read, write: if isOwner(uid) && withinSize('mockExam', 30000) && withinSize('reviewSheet', 30000);
       }
+
+      match /teacherSimulations/{simulationId} {
+        allow read, write: if isOwner(uid);
+      }
     }
   }
 }
