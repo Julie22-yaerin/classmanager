@@ -15,7 +15,7 @@ import { listMessages, createMessage } from "@/lib/firestore/messages";
 import { createMaterial } from "@/lib/firestore/materials";
 import { createDeadlines } from "@/lib/firestore/deadlines";
 import { applyMemoryUpdate, appendImportantDates } from "@/lib/firestore/classes";
-import { callApi, MissingApiKeyClientError } from "@/lib/apiClient";
+import { callApi } from "@/lib/apiClient";
 import { toClassContext, toProfileContext } from "@/lib/mappers";
 import type { ClassDoc, MessageDoc, UserProfile } from "@/lib/firestore/types";
 import type { RunChatResult } from "@/lib/aiChat";
@@ -47,7 +47,6 @@ export default function ChatPage() {
 
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [missingKey, setMissingKey] = useState(false);
   const [clarification, setClarification] = useState<{ reason: string; classes: ClassDoc[]; pending: PendingSend } | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -85,7 +84,6 @@ export default function ChatPage() {
     if (!user) return;
     setSending(true);
     setError(null);
-    setMissingKey(false);
     try {
       let classId = forcedClassId;
       if (!classId) {
@@ -190,12 +188,7 @@ export default function ChatPage() {
       const refreshed = await listClasses(user.uid);
       setClasses(refreshed);
     } catch (err) {
-      if (err instanceof MissingApiKeyClientError) {
-        setMissingKey(true);
-        setError(err.message);
-      } else {
-        setError(err instanceof Error ? err.message : "Something went wrong");
-      }
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSending(false);
     }
@@ -278,7 +271,6 @@ export default function ChatPage() {
           {error && (
             <div className="mb-2 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
               {error}
-              {missingKey && " (the app's AI key isn't configured — this is on us, not you)"}
             </div>
           )}
           {attachError && <p className="mb-2 text-sm text-red-600 dark:text-red-400">{attachError}</p>}

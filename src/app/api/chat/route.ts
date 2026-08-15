@@ -7,6 +7,7 @@ import { MissingApiKeyError } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { logSecurityEvent } from "@/lib/securityLog";
 import { requireReasonableBody } from "@/lib/requestGuard";
+import { enforceQuota, trackUsage } from "@/lib/quota";
 import type { ClassContextInput, ProfileContextInput } from "@/lib/aiContext";
 
 const MAX_BASE64_LEN = 20 * 1024 * 1024; // ~15MB original file
@@ -24,8 +25,9 @@ interface ChatRequestBody {
 
 export async function POST(req: NextRequest) {
   let uid: string;
+  let idToken: string;
   try {
-    uid = await verifyIdToken(req.headers.get("authorization"));
+    ({ uid, idToken } = await verifyIdToken(req.headers.get("authorization")));
   } catch (err) {
     if (err instanceof InvalidAuthError) return NextResponse.json({ error: err.message }, { status: 401 });
     throw err;
@@ -39,6 +41,9 @@ export async function POST(req: NextRequest) {
 
   const tooLarge = requireReasonableBody(req);
   if (tooLarge) return tooLarge;
+
+  const overQuota = await enforceQuota(idToken, uid);
+  if (overQuota) return overQuota;
 
   try {
     const body = (await req.json()) as ChatRequestBody;
@@ -72,9 +77,8 @@ export async function POST(req: NextRequest) {
       if (!transcript && !content.trim()) {
         return NextResponse.json({
           reply:
-            "I saved the recording, but couldn't transcribe it automatically right now (the transcription model needs " +
-            "account credit for audio). Paste the transcript (or your own notes from the recording) as text with the " +
-            "same Class Recording tag and I'll process it.",
+            "I saved the recording, but couldn't transcribe it automatically right now. Paste the transcript (or your " +
+            "own notes from the recording) as text with the same Class Recording tag and I'll process it.",
           topic: null,
           memory_updates: null,
           deadlines: null,
@@ -96,6 +100,7 @@ export async function POST(req: NextRequest) {
       transcript,
     });
 
+    await trackUsage(idToken, uid, result.usage);
     return NextResponse.json(result);
   } catch (err) {
     if (err instanceof MissingApiKeyError) {

@@ -6,9 +6,9 @@ import { listClasses } from "@/lib/firestore/classes";
 import { listDeadlines } from "@/lib/firestore/deadlines";
 import { listRecentMaterialsByTag } from "@/lib/firestore/materials";
 import { getUserProfile } from "@/lib/firestore/profile";
-import { callApi, MissingApiKeyClientError } from "@/lib/apiClient";
+import { callApi } from "@/lib/apiClient";
 import { toProfileContext } from "@/lib/mappers";
-import LaurelAvatar from "@/components/LaurelAvatar";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import type { DailyInputItem, DailyPlanOutput, DailyPlanItem } from "@/lib/dailyMode";
 
 function Bucket({ title, items, tone }: { title: string; items: DailyPlanItem[]; tone: "must" | "should" | "ignore" }) {
@@ -44,7 +44,6 @@ export default function DailyPage() {
   const [generating, setGenerating] = useState(false);
   const [plan, setPlan] = useState<DailyPlanOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [missingKey, setMissingKey] = useState(false);
   const [hasNothing, setHasNothing] = useState(false);
 
   useEffect(() => {
@@ -95,12 +94,7 @@ export default function DailyPage() {
         const { plan } = await callApi<{ plan: DailyPlanOutput }>("/api/daily-mode", { items, profile: toProfileContext(profile) });
         setPlan(plan);
       } catch (err) {
-        if (err instanceof MissingApiKeyClientError) {
-          setMissingKey(true);
-          setError(err.message);
-        } else {
-          setError(err instanceof Error ? err.message : "Failed to build today's plan");
-        }
+        setError(err instanceof Error ? err.message : "Failed to build today's plan");
       } finally {
         setGenerating(false);
       }
@@ -110,7 +104,7 @@ export default function DailyPage() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <LaurelAvatar size={40} className="animate-pulse" />
+        <LoadingSpinner />
       </div>
     );
   }
@@ -130,7 +124,7 @@ export default function DailyPage() {
 
       {error && (
         <div className="mt-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-          {error} {missingKey && "(the app's AI key isn't configured — this is on us, not you)"}
+          {error}
         </div>
       )}
 

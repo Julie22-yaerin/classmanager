@@ -38,13 +38,19 @@ the minimum necessary time.
   its own data.
 - AI models via **OpenRouter**, using two server-side keys:
   - `OPENROUTER_MAIN_API_KEY` — reasoning: chat replies, exam analysis, teacher playbook, daily
-    triage, class routing. Model: `nvidia/nemotron-3-ultra-550b-a55b:free`.
+    triage, class routing. Model: `anthropic/claude-haiku-4.5`.
   - `OPENROUTER_PERCEPTION_API_KEY` — OCR (image/PDF) and audio transcription. Model:
-    `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free`.
-  - Both are currently pinned to free-tier OpenRouter models. Swap the model IDs in
-    `src/lib/ai.ts` if the account has paid credit and you want higher-quality models instead —
-    audio transcription in particular requires OpenRouter account credit even on nominally free
-    models (image/PDF extraction and text reasoning don't).
+    `google/gemini-2.5-flash-lite`.
+  - Both are paid, chosen for quality/cost (see model prices in `src/lib/ai.ts`); a free-tier
+    fallback model (`nvidia/nemotron-3-ultra-550b-a55b:free`) is used automatically if the main
+    model call fails outright — see `src/lib/harness.ts`. Swap the model IDs in `src/lib/ai.ts` if
+    you want different models — audio transcription needs an OpenRouter account with some credit
+    even on models that are otherwise free (image/PDF extraction and text reasoning don't).
+  - **Free-use allowance**: each account gets 25,000 input + 25,000 output tokens per calendar
+    month, tracked server-side against the user's own Firestore document (`src/lib/quota.ts`,
+    `src/lib/serverFirestore.ts` — reads/writes using the caller's own ID token as the Firestore
+    REST credential, no service account needed). Fails open (allows the request) if the quota
+    check itself errors, so a Firestore hiccup never blocks the actual feature.
 
 ## Running locally
 

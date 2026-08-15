@@ -13,12 +13,19 @@ export class InvalidAuthError extends Error {
   }
 }
 
+export interface VerifiedAuth {
+  uid: string;
+  idToken: string;
+}
+
 /**
  * Verifies a Firebase Auth ID token without the Admin SDK (no service
  * account available) — checks the RS256 signature against Google's public
- * JWKS, plus issuer/audience/expiry. Returns the Firebase uid.
+ * JWKS, plus issuer/audience/expiry. Returns the Firebase uid and the raw
+ * token (the latter is reused to call Firestore's REST API server-side on
+ * the user's own behalf — see src/lib/serverFirestore.ts).
  */
-export async function verifyIdToken(authHeader: string | null): Promise<string> {
+export async function verifyIdToken(authHeader: string | null): Promise<VerifiedAuth> {
   if (!authHeader?.startsWith("Bearer ")) throw new InvalidAuthError();
   if (!PROJECT_ID) throw new Error("NEXT_PUBLIC_FIREBASE_PROJECT_ID is not configured on the server.");
 
@@ -29,7 +36,7 @@ export async function verifyIdToken(authHeader: string | null): Promise<string> 
       audience: PROJECT_ID,
     });
     if (!payload.sub) throw new InvalidAuthError();
-    return payload.sub;
+    return { uid: payload.sub, idToken: token };
   } catch {
     throw new InvalidAuthError();
   }

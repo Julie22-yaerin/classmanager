@@ -7,6 +7,7 @@ import { updateUserProfile } from "@/lib/firestore/profile";
 import { createTeacher } from "@/lib/firestore/teachers";
 import { createClass } from "@/lib/firestore/classes";
 import LaurelAvatar from "@/components/LaurelAvatar";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { AI_STYLES, AI_STYLE_LABELS, AI_STYLE_DESCRIPTIONS, type AiStyle } from "@/lib/types";
 
 const GOALS = [
@@ -75,7 +76,7 @@ export default function OnboardingPage() {
   if (loading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <LaurelAvatar size={40} />
+        <LoadingSpinner />
       </div>
     );
   }

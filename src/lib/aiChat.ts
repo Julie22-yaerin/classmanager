@@ -1,8 +1,8 @@
-import { getMainClient, MAIN_MODEL } from "@/lib/ai";
-import { RESPOND_TOOL, extractToolInput, type RespondToolInput } from "@/lib/respondTool";
+import { RESPOND_TOOL, type RespondToolInput } from "@/lib/respondTool";
 import { buildClassMemoryContext, buildStudentProfileContext, type ClassContextInput, type ProfileContextInput } from "@/lib/aiContext";
 import { extractFromDocument } from "@/lib/perception";
 import { TAG_INSTRUCTIONS } from "@/lib/processors/instructions";
+import { structuredCompletion, type TokenUsage } from "@/lib/harness";
 import { HOMEWORK_MODE_INSTRUCTIONS, type HomeworkMode, type Mode, type SourceType, type Tag } from "@/lib/types";
 
 export interface ChatAttachment {
@@ -25,6 +25,7 @@ export interface RunChatInput {
 
 export interface RunChatResult extends RespondToolInput {
   usedTranscript: string | null;
+  usage: TokenUsage;
 }
 
 const MODE_FRAMING: Record<Mode, string> = {
@@ -70,24 +71,15 @@ export async function runChatCompletion(input: RunChatInput): Promise<RunChatRes
     buildClassMemoryContext(input.cls),
     "\n--- Student profile ---",
     buildStudentProfileContext(input.profile),
-    "\nAlways respond by calling the `respond` tool.",
   ].join("\n");
 
   const userContent = `--- Student input ---\n${effectiveContent.trim() || "(no text content — see attachment extraction above)"}`;
 
-  const client = getMainClient();
-  const completion = await client.chat.completions.create({
-    model: MAIN_MODEL,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userContent },
-    ],
-    tools: [RESPOND_TOOL],
-    tool_choice: { type: "function", function: { name: "respond" } },
+  const { result, usage } = await structuredCompletion<RespondToolInput>({
+    system: systemPrompt,
+    messages: [{ role: "user", content: userContent }],
+    tool: RESPOND_TOOL,
   });
 
-  const message = completion.choices[0]?.message;
-  if (!message) throw new Error("Model returned no response.");
-  const result = extractToolInput<RespondToolInput>(message);
-  return { ...result, usedTranscript: extractedText };
+  return { ...result, usedTranscript: extractedText, usage };
 }

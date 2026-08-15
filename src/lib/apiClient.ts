@@ -1,6 +1,7 @@
 import { auth } from "@/lib/firebase";
 
 export class MissingApiKeyClientError extends Error {}
+export class QuotaExceededClientError extends Error {}
 
 export async function callApi<T>(path: string, body: unknown): Promise<T> {
   const user = auth.currentUser;
@@ -16,6 +17,9 @@ export async function callApi<T>(path: string, body: unknown): Promise<T> {
 
   if (res.status === 503 && json.code === "MISSING_API_KEY") {
     throw new MissingApiKeyClientError(json.error);
+  }
+  if (res.status === 429 && json.code === "QUOTA_EXCEEDED") {
+    throw new QuotaExceededClientError(json.error);
   }
   if (!res.ok) {
     throw new Error(json.error ?? "Request failed");

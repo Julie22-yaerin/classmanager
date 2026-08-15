@@ -167,6 +167,16 @@ export default function LoginPage() {
             {mode === "signin" ? "Đăng ký" : "Đăng nhập"}
           </button>
         </p>
+
+        <p className="mt-6 text-center text-xs text-zinc-400">
+          <a href="/privacy" className="underline">
+            Privacy Policy
+          </a>{" "}
+          ·{" "}
+          <a href="/terms" className="underline">
+            Terms of Service
+          </a>
+        </p>
       </div>
     </div>
   );

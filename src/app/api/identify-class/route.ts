@@ -5,6 +5,7 @@ import { MissingApiKeyError } from "@/lib/ai";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { logSecurityEvent } from "@/lib/securityLog";
 import { requireReasonableBody } from "@/lib/requestGuard";
+import { enforceQuota, trackUsage } from "@/lib/quota";
 
 interface Body {
   content: string;
@@ -13,8 +14,9 @@ interface Body {
 
 export async function POST(req: NextRequest) {
   let uid: string;
+  let idToken: string;
   try {
-    uid = await verifyIdToken(req.headers.get("authorization"));
+    ({ uid, idToken } = await verifyIdToken(req.headers.get("authorization")));
   } catch (err) {
     if (err instanceof InvalidAuthError) return NextResponse.json({ error: err.message }, { status: 401 });
     throw err;
@@ -29,9 +31,13 @@ export async function POST(req: NextRequest) {
   const tooLarge = requireReasonableBody(req);
   if (tooLarge) return tooLarge;
 
+  const overQuota = await enforceQuota(idToken, uid);
+  if (overQuota) return overQuota;
+
   try {
     const body = (await req.json()) as Body;
     const result = await identifyClass((body.content ?? "").slice(0, 2000), body.classes ?? []);
+    await trackUsage(idToken, uid, result.usage);
     return NextResponse.json(result);
   } catch (err) {
     if (err instanceof MissingApiKeyError) {

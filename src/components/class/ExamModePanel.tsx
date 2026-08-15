@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/lib/authContext";
-import { callApi, MissingApiKeyClientError } from "@/lib/apiClient";
+import { callApi } from "@/lib/apiClient";
 import { toClassContext, toProfileContext } from "@/lib/mappers";
 import { listMaterialsForClass } from "@/lib/firestore/materials";
 import { createExamReport, listExamReports } from "@/lib/firestore/examReports";
@@ -90,13 +90,11 @@ export default function ExamModePanel({ cls, initialReports }: { cls: ClassDoc; 
   const [reports, setReports] = useState(initialReports);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [missingKey, setMissingKey] = useState(false);
 
   async function generate() {
     if (!user) return;
     setBusy(true);
     setError(null);
-    setMissingKey(false);
     try {
       const [materials, profile] = await Promise.all([listMaterialsForClass(user.uid, cls.id), getUserProfile(user.uid)]);
       const pastExams = materials.filter((m) => m.tag === "PastExam").map(toMaterialSummary);
@@ -126,12 +124,7 @@ export default function ExamModePanel({ cls, initialReports }: { cls: ClassDoc; 
       const refreshed = await listExamReports(user.uid, cls.id);
       setReports(refreshed.length ? refreshed : [saved]);
     } catch (err) {
-      if (err instanceof MissingApiKeyClientError) {
-        setMissingKey(true);
-        setError(err.message);
-      } else {
-        setError(err instanceof Error ? err.message : "Failed to generate report");
-      }
+      setError(err instanceof Error ? err.message : "Failed to generate report");
     } finally {
       setBusy(false);
     }
@@ -154,11 +147,7 @@ export default function ExamModePanel({ cls, initialReports }: { cls: ClassDoc; 
           {busy ? "Generating…" : "Generate exam prep"}
         </button>
       </div>
-      {error && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-          {error} {missingKey && "(the app's AI key isn't configured — this is on us, not you)"}
-        </p>
-      )}
+      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       {reports.length === 0 && !busy && <p className="mt-3 text-sm text-zinc-500">No exam prep generated yet.</p>}
       {reports[0] && <ReportView report={reports[0]} />}
     </section>

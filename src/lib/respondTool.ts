@@ -5,7 +5,7 @@ import type OpenAI from "openai";
  * forced tool call, so memory updates / deadlines / exam analysis are
  * structured instead of scraped out of prose.
  */
-export const RESPOND_TOOL: OpenAI.Chat.Completions.ChatCompletionTool = {
+export const RESPOND_TOOL: OpenAI.Chat.Completions.ChatCompletionFunctionTool = {
   type: "function",
   function: {
     name: "respond",
@@ -102,17 +102,4 @@ export interface RespondToolInput {
     mark_distribution: { topic: string; marks: number }[];
     recurring_patterns: string;
   } | null;
-}
-
-export function extractToolInput<T>(message: OpenAI.Chat.Completions.ChatCompletionMessage, fallbackReplyKey = "reply"): T {
-  const toolCall = message.tool_calls?.[0];
-  if (!toolCall || toolCall.type !== "function") {
-    const text = message.content ?? "I couldn't process that — please try again.";
-    return { [fallbackReplyKey]: text } as unknown as T;
-  }
-  try {
-    return JSON.parse(toolCall.function.arguments) as T;
-  } catch {
-    return { [fallbackReplyKey]: "I couldn't process that — please try again." } as unknown as T;
-  }
 }
