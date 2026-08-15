@@ -13,7 +13,7 @@ export default function NotFound() {
         That page doesn&apos;t exist, or you don&apos;t have access to it. Let&apos;s get you back to your classes.
       </p>
       <Link
-        href="/"
+        href="/app"
         className="mt-2 rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
       >
         Back to chat

@@ -21,7 +21,24 @@ export default function TermsPage() {
         <p className="mt-1 text-xs text-zinc-500">Last updated: {new Date().toISOString().slice(0, 10)}</p>
       </div>
 
-      <p>By creating an account and using School AI, you agree to the following.</p>
+      <p>
+        By creating an account and using School AI, you agree to the following. School AI is operated by the app
+        operator, contactable at{" "}
+        <a href="mailto:yris22@thelyceum.site" className="underline">
+          yris22@thelyceum.site
+        </a>{" "}
+        for any question about these terms.
+      </p>
+
+      <section>
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Age &amp; parental consent</h2>
+        <p className="mt-2">
+          You must be 16 or older to create an account yourself. If you&apos;re under 16, a parent or guardian must
+          create the account and agree to these terms on your behalf, and consents by doing so to your use of the
+          service. See the <Link href="/privacy" className="underline">Privacy Policy</Link> for how to have a
+          minor&apos;s account removed.
+        </p>
+      </section>
 
       <section>
         <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">What this is</h2>
@@ -69,10 +86,30 @@ export default function TermsPage() {
       </section>
 
       <section>
-        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Availability</h2>
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Availability &amp; disclaimer</h2>
         <p className="mt-2">
-          This is provided as-is, without uptime or accuracy guarantees. Features, models, and the free-use allowance
-          may change.
+          This is provided &quot;as is&quot; and &quot;as available,&quot; without warranties of any kind, express or
+          implied — including accuracy, fitness for a particular purpose, or uninterrupted availability. Features,
+          models, and the free-use allowance may change. To the fullest extent permitted by law, the operator isn&apos;t
+          liable for indirect, incidental, or consequential damages arising from your use of the service; total
+          liability for any claim is limited to what (if anything) you&apos;ve paid to use it.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Termination</h2>
+        <p className="mt-2">
+          You can stop using School AI and delete your account and all its data at any time from Settings → Account →
+          Delete account. The operator may suspend or terminate an account that violates the acceptable-use terms
+          above, or discontinue the service, with notice where practical.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Governing law</h2>
+        <p className="mt-2">
+          These terms are governed by generally applicable consumer-protection law in your country of residence,
+          without prejudice to any mandatory local consumer rights you have that these terms can&apos;t override.
         </p>
       </section>
 
