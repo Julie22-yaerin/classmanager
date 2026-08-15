@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, getDoc, getDocs, orderBy, query, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { ClassDoc, TeacherPlaybook } from "@/lib/firestore/types";
 import type { TopicPriorityItem, ImportantDateItem } from "@/lib/types";
@@ -90,4 +90,18 @@ export async function saveTopicPriorities(uid: string, classId: string, topicPri
 
 export async function savePlaybook(uid: string, classId: string, playbook: TeacherPlaybook): Promise<void> {
   await updateDoc(classRef(uid, classId), { playbook, updatedAt: new Date().toISOString() });
+}
+
+export interface UpdateClassInput {
+  grade: string;
+  subject: string;
+  textbook: string | null;
+}
+
+export async function updateClassBasics(uid: string, classId: string, input: UpdateClassInput): Promise<void> {
+  await updateDoc(classRef(uid, classId), { ...input, updatedAt: new Date().toISOString() });
+}
+
+export async function deleteClass(uid: string, classId: string): Promise<void> {
+  await deleteDoc(classRef(uid, classId));
 }
