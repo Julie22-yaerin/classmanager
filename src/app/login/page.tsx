@@ -37,6 +37,9 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resetStatus, setResetStatus] = useState<string | null>(null);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+
+  const blockedBySignupGate = mode === "signup" && !ageConfirmed;
 
   async function afterAuth() {
     if (auth.currentUser) {
@@ -113,10 +116,22 @@ export default function LoginPage() {
           <p className="text-sm text-zinc-500">{mode === "signin" ? "Đăng nhập để tiếp tục" : "Tạo tài khoản mới"}</p>
         </div>
 
+        {mode === "signup" && (
+          <label className="mb-4 flex items-start gap-2 text-xs text-zinc-500">
+            <input
+              type="checkbox"
+              checked={ageConfirmed}
+              onChange={(e) => setAgeConfirmed(e.target.checked)}
+              className="mt-0.5"
+            />
+            Tôi từ 16 tuổi trở lên, hoặc tài khoản này được phụ huynh/người giám hộ tạo và đồng ý cho tôi sử dụng.
+          </label>
+        )}
+
         <button
           type="button"
           onClick={onGoogle}
-          disabled={busy}
+          disabled={busy || blockedBySignupGate}
           className="mb-4 flex w-full items-center justify-center gap-2 rounded-full border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
@@ -161,7 +176,7 @@ export default function LoginPage() {
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           <button
             type="submit"
-            disabled={busy}
+            disabled={busy || blockedBySignupGate}
             className="rounded-full bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-zinc-900"
           >
             {busy ? "Đang xử lý…" : mode === "signin" ? "Đăng nhập" : "Đăng ký"}
@@ -172,7 +187,10 @@ export default function LoginPage() {
           {mode === "signin" ? "Chưa có tài khoản?" : "Đã có tài khoản?"}{" "}
           <button
             type="button"
-            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+            onClick={() => {
+              setMode(mode === "signin" ? "signup" : "signin");
+              setAgeConfirmed(false);
+            }}
             className="font-medium text-zinc-900 underline dark:text-zinc-50"
           >
             {mode === "signin" ? "Đăng ký" : "Đăng nhập"}

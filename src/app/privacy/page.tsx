@@ -28,6 +28,32 @@ export default function PrivacyPage() {
       </p>
 
       <section>
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Who&apos;s responsible for this data</h2>
+        <p className="mt-2">
+          School AI is operated by the app operator, contactable at{" "}
+          <a href="mailto:yris22@thelyceum.site" className="underline">
+            yris22@thelyceum.site
+          </a>{" "}
+          for any privacy question, data request, or concern — this is the data controller for anything described on
+          this page.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Age &amp; parental consent</h2>
+        <p className="mt-2">
+          School AI is built for students, including those under 18. Creating an account requires confirming you&apos;re
+          16 or older, or that a parent/guardian created the account and consents to your use of it — that
+          confirmation happens at sign-up. If you&apos;re a parent or guardian and believe a child under 16 created an
+          account without your consent, contact{" "}
+          <a href="mailto:yris22@thelyceum.site" className="underline">
+            yris22@thelyceum.site
+          </a>{" "}
+          and the account and its data will be deleted.
+        </p>
+      </section>
+
+      <section>
         <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">What we collect</h2>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>
@@ -50,11 +76,43 @@ export default function PrivacyPage() {
       </section>
 
       <section>
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Why we&apos;re allowed to process this</h2>
+        <p className="mt-2">
+          Account info and the content you submit are processed to perform the service you&apos;ve asked for — that&apos;s
+          the contractual basis for using School AI. Usage tracking (token counts) is processed under our legitimate
+          interest in keeping the free-use allowance fair and the service financially sustainable. Analytics cookies
+          run only with your consent (see the cookie banner and the toggle in Settings).
+        </p>
+      </section>
+
+      <section>
         <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Where it&apos;s stored</h2>
         <p className="mt-2">
           Everything above is stored in Google Firestore, scoped to your account — Firestore&apos;s security rules
           prevent any other user, and this app&apos;s own server, from reading or writing your data directly; access is
-          only ever your signed-in browser acting on your own account.
+          only ever your signed-in browser acting on your own account. Data is transmitted over encrypted (HTTPS/TLS)
+          connections end to end — from your browser to Firebase/Firestore, to our servers, and to the AI providers
+          below.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">How long we keep it</h2>
+        <p className="mt-2">
+          Your data is kept for as long as your account exists, so class memory and history stay useful across the
+          school year. Deleting your account (Settings → Account → Delete account) permanently deletes it immediately
+          — there&apos;s no separate retention period afterward, other than what a third-party processor below
+          independently retains under its own policy (e.g. transient inference logs at an AI provider).
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">International transfers</h2>
+        <p className="mt-2">
+          Firebase/Firestore (Google) and the AI providers below may process and store data outside your own country —
+          that&apos;s inherent to using global cloud infrastructure. These providers are large-scale processors that
+          maintain their own cross-border transfer safeguards (e.g. standard contractual clauses); we don&apos;t
+          separately re-host or restrict where they run.
         </p>
       </section>
 
@@ -87,12 +145,45 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Your choices</h2>
-        <p className="mt-2">
-          You can edit or delete the teachers, classes, and materials you&apos;ve added at any time from within the app.
-          To delete your account and all associated data, or for any other privacy question, contact the app operator
-          through the channel this app was shared with you on.
-        </p>
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Your rights</h2>
+        <p className="mt-2">You can, at any time and mostly without asking us:</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>
+            <strong>Access &amp; export</strong> — Settings → Privacy &amp; data → Download my data gives you
+            everything we hold on you as a JSON file.
+          </li>
+          <li>
+            <strong>Rectify</strong> — edit or delete any teacher, class, or material directly in the app; your
+            profile is editable in Settings.
+          </li>
+          <li>
+            <strong>Erase</strong> — Settings → Account → Delete account permanently removes your account and every
+            record tied to it, immediately.
+          </li>
+          <li>
+            <strong>Object / withdraw consent</strong> — turn off audio-upload processing or analytics consent
+            anytime in Settings → Privacy &amp; data.
+          </li>
+          <li>
+            <strong>Complain</strong> — if you&apos;re in the EU/EEA, UK, or another jurisdiction with a data
+            protection authority, you can lodge a complaint with your local authority. We&apos;d appreciate the chance
+            to fix it first at{" "}
+            <a href="mailto:yris22@thelyceum.site" className="underline">
+              yris22@thelyceum.site
+            </a>
+            .
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Security measures</h2>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>All connections use HTTPS/TLS, with HSTS enforced.</li>
+          <li>Every record is scoped to your account by Firestore Security Rules — enforced server-side, not just in the app.</li>
+          <li>Authentication uses Firebase Auth; we never see or store your password.</li>
+          <li>Rate limiting and request-size limits guard every AI endpoint against abuse.</li>
+        </ul>
       </section>
 
       <section>
