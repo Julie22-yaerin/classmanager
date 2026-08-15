@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useAuth } from "@/lib/authContext";
 import { listClasses } from "@/lib/firestore/classes";
 import { listDeadlines } from "@/lib/firestore/deadlines";
@@ -131,7 +130,7 @@ export default function DailyPage() {
 
       {error && (
         <div className="mt-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-          {error} {missingKey && <Link href="/settings" className="underline font-medium">Add your API key</Link>}
+          {error} {missingKey && "(the app's AI key isn't configured — this is on us, not you)"}
         </div>
       )}
 

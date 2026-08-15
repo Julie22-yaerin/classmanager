@@ -6,6 +6,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { ensureUserProfile } from "@/lib/firestore/profile";
@@ -35,6 +36,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetStatus, setResetStatus] = useState<string | null>(null);
 
   async function afterAuth() {
     if (auth.currentUser) {
@@ -72,6 +74,22 @@ export default function LoginPage() {
       setError("Đăng nhập Google thất bại, thử lại nhé.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onForgotPassword() {
+    if (!email.trim()) {
+      setError("Nhập email trước, rồi bấm quên mật khẩu.");
+      return;
+    }
+    setError(null);
+    setResetStatus(null);
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+    } catch {
+      // Same message whether or not the email exists — avoids leaking which emails have accounts.
+    } finally {
+      setResetStatus("Nếu email này có tài khoản, chúng tôi đã gửi link đặt lại mật khẩu.");
     }
   }
 
@@ -123,6 +141,12 @@ export default function LoginPage() {
             placeholder="Mật khẩu"
             className="rounded-xl border border-zinc-300 px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
           />
+          {mode === "signin" && (
+            <button type="button" onClick={onForgotPassword} className="self-end text-xs text-zinc-500 hover:underline">
+              Quên mật khẩu?
+            </button>
+          )}
+          {resetStatus && <p className="text-sm text-green-600 dark:text-green-400">{resetStatus}</p>}
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           <button
             type="submit"

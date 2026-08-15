@@ -14,7 +14,7 @@ export async function callApi<T>(path: string, body: unknown): Promise<T> {
   });
   const json = await res.json();
 
-  if (res.status === 401 && json.code === "MISSING_API_KEY") {
+  if (res.status === 503 && json.code === "MISSING_API_KEY") {
     throw new MissingApiKeyClientError(json.error);
   }
   if (!res.ok) {

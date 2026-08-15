@@ -1,84 +1,86 @@
-import type Anthropic from "@anthropic-ai/sdk";
+import type OpenAI from "openai";
 
 /**
- * Every tag processor asks Claude for the same shaped output via a forced
- * tool call, so memory updates / deadlines / exam analysis are structured
- * instead of scraped out of prose.
+ * Every tag processor asks the model for the same shaped output via a
+ * forced tool call, so memory updates / deadlines / exam analysis are
+ * structured instead of scraped out of prose.
  */
-export const RESPOND_TOOL: Anthropic.Tool = {
-  name: "respond",
-  description:
-    "Return the chat reply plus any structured updates to class memory that this input justifies.",
-  input_schema: {
-    type: "object",
-    properties: {
-      reply: {
-        type: "string",
-        description: "The message to show the student in chat.",
-      },
-      topic: {
-        type: ["string", "null"],
-        description: "Primary topic this input relates to, if identifiable.",
-      },
-      memory_updates: {
-        type: ["object", "null"],
-        description: "Fields to merge into this class's persistent memory. Omit/null any field that isn't newly learned.",
-        properties: {
-          curriculum_note: { type: ["string", "null"], description: "New sentence(s) to append to the running curriculum summary." },
-          teacher_persona: { type: ["string", "null"], description: "Updated read on the teacher's persona/expectations." },
-          teaching_style: { type: ["string", "null"], description: "Updated read on how the teacher teaches." },
-          question_style: { type: ["string", "null"], description: "Updated read on how the teacher phrases questions." },
-          assessment_patterns: { type: ["string", "null"], description: "Updated read on how the teacher grades/tests." },
-          topic_priorities: {
-            type: ["array", "null"],
-            description: "Ranked topics this class emphasizes. Replaces the prior list when present.",
-            items: {
-              type: "object",
-              properties: {
-                topic: { type: "string" },
-                weight: { type: "integer", minimum: 1, maximum: 5 },
-                reason: { type: "string" },
-              },
-              required: ["topic", "weight", "reason"],
-            },
-          },
+export const RESPOND_TOOL: OpenAI.Chat.Completions.ChatCompletionTool = {
+  type: "function",
+  function: {
+    name: "respond",
+    description: "Return the chat reply plus any structured updates to class memory that this input justifies.",
+    parameters: {
+      type: "object",
+      properties: {
+        reply: {
+          type: "string",
+          description: "The message to show the student in chat.",
         },
-      },
-      deadlines: {
-        type: ["array", "null"],
-        description: "Tasks/dates/deadlines extracted from this input, if any.",
-        items: {
-          type: "object",
+        topic: {
+          type: ["string", "null"],
+          description: "Primary topic this input relates to, if identifiable.",
+        },
+        memory_updates: {
+          type: ["object", "null"],
+          description: "Fields to merge into this class's persistent memory. Omit/null any field that isn't newly learned.",
           properties: {
-            title: { type: "string" },
-            due_date: { type: ["string", "null"], description: "ISO 8601 date, or null if no date was given." },
-            notes: { type: ["string", "null"] },
-          },
-          required: ["title", "due_date"],
-        },
-      },
-      exam_analysis: {
-        type: ["object", "null"],
-        description: "Only for Past Exam inputs: structural analysis of the exam.",
-        properties: {
-          topics: { type: "array", items: { type: "string" } },
-          difficulty: { type: "string" },
-          mark_distribution: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                topic: { type: "string" },
-                marks: { type: "number" },
+            curriculum_note: { type: ["string", "null"], description: "New sentence(s) to append to the running curriculum summary." },
+            teacher_persona: { type: ["string", "null"], description: "Updated read on the teacher's persona/expectations." },
+            teaching_style: { type: ["string", "null"], description: "Updated read on how the teacher teaches." },
+            question_style: { type: ["string", "null"], description: "Updated read on how the teacher phrases questions." },
+            assessment_patterns: { type: ["string", "null"], description: "Updated read on how the teacher grades/tests." },
+            topic_priorities: {
+              type: ["array", "null"],
+              description: "Ranked topics this class emphasizes. Replaces the prior list when present.",
+              items: {
+                type: "object",
+                properties: {
+                  topic: { type: "string" },
+                  weight: { type: "integer", minimum: 1, maximum: 5 },
+                  reason: { type: "string" },
+                },
+                required: ["topic", "weight", "reason"],
               },
-              required: ["topic", "marks"],
             },
           },
-          recurring_patterns: { type: "string" },
+        },
+        deadlines: {
+          type: ["array", "null"],
+          description: "Tasks/dates/deadlines extracted from this input, if any.",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              due_date: { type: ["string", "null"], description: "ISO 8601 date, or null if no date was given." },
+              notes: { type: ["string", "null"] },
+            },
+            required: ["title", "due_date"],
+          },
+        },
+        exam_analysis: {
+          type: ["object", "null"],
+          description: "Only for Past Exam inputs: structural analysis of the exam.",
+          properties: {
+            topics: { type: "array", items: { type: "string" } },
+            difficulty: { type: "string" },
+            mark_distribution: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  topic: { type: "string" },
+                  marks: { type: "number" },
+                },
+                required: ["topic", "marks"],
+              },
+            },
+            recurring_patterns: { type: "string" },
+          },
         },
       },
+      required: ["reply", "topic", "memory_updates", "deadlines", "exam_analysis"],
     },
-    required: ["reply", "topic", "memory_updates", "deadlines", "exam_analysis"],
   },
 };
 
@@ -102,17 +104,15 @@ export interface RespondToolInput {
   } | null;
 }
 
-export function extractRespondToolInput(message: Anthropic.Message): RespondToolInput {
-  const toolUse = message.content.find((block) => block.type === "tool_use");
-  if (!toolUse || toolUse.type !== "tool_use") {
-    const text = message.content.find((b) => b.type === "text");
-    return {
-      reply: text && text.type === "text" ? text.text : "I couldn't process that — please try again.",
-      topic: null,
-      memory_updates: null,
-      deadlines: null,
-      exam_analysis: null,
-    };
+export function extractToolInput<T>(message: OpenAI.Chat.Completions.ChatCompletionMessage, fallbackReplyKey = "reply"): T {
+  const toolCall = message.tool_calls?.[0];
+  if (!toolCall || toolCall.type !== "function") {
+    const text = message.content ?? "I couldn't process that — please try again.";
+    return { [fallbackReplyKey]: text } as unknown as T;
   }
-  return toolUse.input as RespondToolInput;
+  try {
+    return JSON.parse(toolCall.function.arguments) as T;
+  } catch {
+    return { [fallbackReplyKey]: "I couldn't process that — please try again." } as unknown as T;
+  }
 }

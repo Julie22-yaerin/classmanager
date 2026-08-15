@@ -278,14 +278,7 @@ export default function ChatPage() {
           {error && (
             <div className="mb-2 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
               {error}
-              {missingKey && (
-                <>
-                  {" "}
-                  <Link href="/settings" className="underline font-medium">
-                    Add your API key
-                  </Link>
-                </>
-              )}
+              {missingKey && " (the app's AI key isn't configured — this is on us, not you)"}
             </div>
           )}
           {attachError && <p className="mb-2 text-sm text-red-600 dark:text-red-400">{attachError}</p>}
@@ -322,7 +315,12 @@ export default function ChatPage() {
 
             <div className="flex items-end gap-2">
               <label className="flex shrink-0 cursor-pointer items-center justify-center rounded-full p-2 text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800">
-                <input type="file" accept="image/*,application/pdf,audio/*" onChange={onFileChange} className="hidden" />
+                <input
+                type="file"
+                accept="image/*,application/pdf,audio/mpeg,audio/mp3,audio/wav,audio/x-wav"
+                onChange={onFileChange}
+                className="hidden"
+              />
                 <span aria-hidden className="text-lg leading-none">＋</span>
                 <span className="sr-only">Attach a file</span>
               </label>
