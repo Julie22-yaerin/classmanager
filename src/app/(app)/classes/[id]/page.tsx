@@ -12,8 +12,10 @@ import ClassMemoryPanel from "@/components/class/ClassMemoryPanel";
 import MaterialsList from "@/components/class/MaterialsList";
 import ExamModePanel from "@/components/class/ExamModePanel";
 import TeacherPlaybookPanel from "@/components/class/TeacherPlaybookPanel";
+import TeacherSimulatorPanel from "@/components/class/TeacherSimulatorPanel";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import type { ClassDoc, MaterialDoc, DeadlineDoc, ExamReportDoc } from "@/lib/firestore/types";
+import { listTeacherSimulations } from "@/lib/firestore/teacherSimulations";
+import type { ClassDoc, MaterialDoc, DeadlineDoc, ExamReportDoc, TeacherSimulationDoc } from "@/lib/firestore/types";
 
 export default function ClassDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +24,7 @@ export default function ClassDetailPage() {
   const [materials, setMaterials] = useState<MaterialDoc[]>([]);
   const [deadlines, setDeadlines] = useState<DeadlineDoc[]>([]);
   const [examReports, setExamReports] = useState<ExamReportDoc[]>([]);
+  const [simulations, setSimulations] = useState<TeacherSimulationDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -34,15 +37,17 @@ export default function ClassDetailPage() {
         setLoading(false);
         return;
       }
-      const [m, d, r] = await Promise.all([
+      const [m, d, r, s] = await Promise.all([
         listMaterialsForClass(user.uid, id),
         listDeadlines(user.uid, id),
         listExamReports(user.uid, id),
+        listTeacherSimulations(user.uid, id),
       ]);
       setCls(c);
       setMaterials(m);
       setDeadlines(d);
       setExamReports(r);
+      setSimulations(s);
       setLoading(false);
     })();
   }, [user, id]);
@@ -83,6 +88,7 @@ export default function ClassDetailPage() {
         </div>
         <div className="flex flex-col gap-6">
           <TeacherPlaybookPanel cls={cls} onSaved={(playbook) => setCls((prev) => (prev ? { ...prev, playbook } : prev))} />
+          <TeacherSimulatorPanel cls={cls} initialSimulations={simulations} />
           <ExamModePanel cls={cls} initialReports={examReports} />
 
           <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">

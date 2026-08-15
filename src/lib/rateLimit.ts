@@ -16,6 +16,7 @@ const LIMITS: Record<string, number> = {
   chat: 20,
   "exam-mode": 5,
   "teacher-playbook": 5,
+  "teacher-simulator": 5,
   "daily-mode": 10,
   "identify-class": 20,
 };
