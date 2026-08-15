@@ -12,7 +12,7 @@ import { auth, googleProvider } from "@/lib/firebase";
 import { ensureUserProfile } from "@/lib/firestore/profile";
 import LaurelAvatar from "@/components/LaurelAvatar";
 
-function friendlyError(code: string): string {
+function friendlyError(code: string, message?: string): string {
   switch (code) {
     case "auth/invalid-credential":
     case "auth/wrong-password":
@@ -24,8 +24,19 @@ function friendlyError(code: string): string {
       return "Mật khẩu cần ít nhất 6 ký tự.";
     case "auth/invalid-email":
       return "Email không hợp lệ.";
+    case "auth/operation-not-allowed":
+      return "Đăng nhập bằng Email/Mật khẩu chưa được bật trong Firebase Console → Authentication → Sign-in method.";
+    case "auth/api-key-not-valid":
+    case "auth/invalid-api-key":
+      return "Firebase API key không hợp lệ trên domain này — kiểm tra lại biến NEXT_PUBLIC_FIREBASE_API_KEY.";
+    case "auth/network-request-failed":
+      return "Không kết nối được tới Firebase — kiểm tra mạng rồi thử lại.";
+    case "auth/too-many-requests":
+      return "Thử sai quá nhiều lần — đợi một lát rồi thử lại.";
     default:
-      return "Có lỗi xảy ra, thử lại nhé.";
+      // Surfaced verbatim so an unrecognized failure can actually be diagnosed
+      // instead of hidden behind a generic message.
+      return `Có lỗi xảy ra (${code || "không rõ mã lỗi"}): ${message ?? "không rõ nguyên nhân"}. Thử lại nhé.`;
   }
 }
 
@@ -61,7 +72,8 @@ export default function LoginPage() {
       await afterAuth();
     } catch (err) {
       const code = (err as { code?: string }).code ?? "";
-      setError(friendlyError(code));
+      const message = (err as { message?: string }).message;
+      setError(friendlyError(code, message));
     } finally {
       setBusy(false);
     }
