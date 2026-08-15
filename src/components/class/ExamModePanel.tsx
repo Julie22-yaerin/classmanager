@@ -10,6 +10,7 @@ import { saveTopicPriorities } from "@/lib/firestore/classes";
 import { getUserProfile } from "@/lib/firestore/profile";
 import type { ClassDoc, ExamReportDoc, MaterialDoc } from "@/lib/firestore/types";
 import type { ExamReportOutput, MaterialSummary } from "@/lib/examMode";
+import { TopicPriorityBars, MarkDistributionBars } from "@/components/class/WeightBars";
 
 interface ParsedTopic {
   topic: string;
@@ -36,14 +37,7 @@ function ReportView({ report }: { report: ExamReportDoc }) {
     <div className="mt-4 flex flex-col gap-4 text-sm">
       <div>
         <h4 className="text-xs font-medium uppercase tracking-wide text-zinc-500">Topic priority</h4>
-        <ul className="mt-1 flex flex-col gap-1">
-          {topicPriority.map((t, i) => (
-            <li key={i}>
-              <span className="rounded bg-zinc-100 px-1.5 text-xs font-medium dark:bg-zinc-800">{t.weight}/5</span> <strong>{t.topic}</strong>{" "}
-              <span className="text-zinc-500">— {t.reason}</span>
-            </li>
-          ))}
-        </ul>
+        <TopicPriorityBars items={topicPriority} />
       </div>
       <div>
         <h4 className="text-xs font-medium uppercase tracking-wide text-zinc-500">Question-pattern analysis</h4>
@@ -51,13 +45,7 @@ function ReportView({ report }: { report: ExamReportDoc }) {
       </div>
       <div>
         <h4 className="text-xs font-medium uppercase tracking-wide text-zinc-500">Estimated mark distribution</h4>
-        <ul className="mt-1 flex flex-col gap-1">
-          {markDistribution.map((m, i) => (
-            <li key={i}>
-              {m.topic} — {m.estimated_percent}%
-            </li>
-          ))}
-        </ul>
+        <MarkDistributionBars items={markDistribution} />
       </div>
       <div>
         <h4 className="text-xs font-medium uppercase tracking-wide text-zinc-500">Weak areas</h4>
