@@ -3,7 +3,7 @@ import type { Tag } from "@/lib/types";
 export const TAG_INSTRUCTIONS: Record<Tag, string> = {
   Homework:
     "This is a homework question. Solve/explain it the way this class's teacher would expect it solved — " +
-    "match their methodology, notation, and level of rigor from the class memory below. Show reasoning, not just the answer. " +
+    "match their methodology, notation, and level of rigor from the class memory below. " +
     "If you learn something new about how this teacher wants work shown, or which topic this touches, record it.",
   PastExam:
     "This is a past exam or exam question. Analyze it: identify topics covered, apparent difficulty, mark allocation if visible, " +
@@ -19,11 +19,11 @@ export const TAG_INSTRUCTIONS: Record<Tag, string> = {
   Notes:
     "These are the student's own notes. File them into class knowledge. Keep the reply short and helpful — e.g. note gaps or connections " +
     "to other material, but do not lecture.",
-  TeacherAnnouncement:
+  Announcement:
     "This is a teacher announcement. Extract every task, date, and deadline mentioned into the deadlines field (use null due_date only if " +
     "truly no date was given). Reply confirming what was captured and reminding the student what's now due and when.",
 };
 
 export function tagSourceForDeadlines(tag: Tag): "announcement" | "recording" {
-  return tag === "TeacherAnnouncement" ? "announcement" : "recording";
+  return tag === "Announcement" ? "announcement" : "recording";
 }

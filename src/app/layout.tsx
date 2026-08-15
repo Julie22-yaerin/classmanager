@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
+import { AuthProvider } from "@/lib/authContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,15 +18,14 @@ export const metadata: Metadata = {
   description: "One chat that learns how each student's teachers, classes, and curriculum actually work.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex h-screen overflow-hidden bg-white text-zinc-900 dark:bg-[#212121] dark:text-zinc-50">
-        <Sidebar />
-        <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">{children}</div>
+      <body className="h-full bg-white text-zinc-900 dark:bg-[#212121] dark:text-zinc-50">
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

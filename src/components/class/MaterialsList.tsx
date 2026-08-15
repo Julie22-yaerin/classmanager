@@ -1,8 +1,8 @@
 import { TAG_LABELS, TAGS, type Tag } from "@/lib/types";
-import type { MaterialDTO } from "@/lib/clientTypes";
+import type { MaterialDoc } from "@/lib/firestore/types";
 
-export default function MaterialsList({ materials }: { materials: MaterialDTO[] }) {
-  const byTag = new Map<Tag, MaterialDTO[]>();
+export default function MaterialsList({ materials }: { materials: MaterialDoc[] }) {
+  const byTag = new Map<Tag, MaterialDoc[]>();
   for (const tag of TAGS) byTag.set(tag, []);
   for (const m of materials) byTag.get(m.tag)?.push(m);
 

@@ -1,7 +1,6 @@
-import { prisma } from "@/lib/db";
-import { getAnthropicClient, CHAT_MODEL } from "@/lib/ai";
-import { buildClassMemoryContext, buildStudentProfileContext, getSingletonStudentProfile } from "@/lib/memory";
 import type Anthropic from "@anthropic-ai/sdk";
+import { getAnthropicClient, CHAT_MODEL } from "@/lib/ai";
+import { buildClassMemoryContext, buildStudentProfileContext, type ClassContextInput, type ProfileContextInput } from "@/lib/aiContext";
 
 const EXAM_REPORT_TOOL: Anthropic.Tool = {
   name: "exam_report",
@@ -64,34 +63,43 @@ export interface ExamReportOutput {
   caveat: string;
 }
 
-export async function generateExamReport(classId: string): Promise<ExamReportOutput> {
-  const cls = await prisma.class.findUniqueOrThrow({ where: { id: classId }, include: { teacher: true } });
-  const materials = await prisma.material.findMany({ where: { classId }, orderBy: { createdAt: "desc" }, take: 60 });
-  const profile = await getSingletonStudentProfile();
+export interface MaterialSummary {
+  tag: string;
+  topic: string | null;
+  excerpt: string;
+  analysis: string | null;
+}
 
-  const pastExams = materials.filter((m) => m.tag === "PastExam");
-  const homework = materials.filter((m) => m.tag === "Homework");
-  const otherMaterials = materials.filter((m) => !["PastExam", "Homework"].includes(m.tag));
+export interface GenerateExamReportInput {
+  cls: ClassContextInput;
+  profile: ProfileContextInput | null;
+  pastExams: MaterialSummary[];
+  homework: MaterialSummary[];
+  otherMaterials: MaterialSummary[];
+}
 
-  const summarize = (items: typeof materials) =>
-    items
-      .map((m) => `- [${m.tag}] topic=${m.topic ?? "?"} :: ${(m.extractedText ?? m.rawContent ?? "").slice(0, 400)}${m.analysis ? ` :: analysis=${m.analysis}` : ""}`)
-      .join("\n") || "(none yet)";
+function summarize(items: MaterialSummary[]): string {
+  return (
+    items.map((m) => `- [${m.tag}] topic=${m.topic ?? "?"} :: ${m.excerpt.slice(0, 400)}${m.analysis ? ` :: analysis=${m.analysis}` : ""}`).join("\n") ||
+    "(none yet)"
+  );
+}
 
+export async function generateExamReport(input: GenerateExamReportInput): Promise<ExamReportOutput> {
   const system = [
     "You generate exam-prep intelligence for one class, combining everything accumulated about it so far.",
     "Never claim certainty about future exam questions — priorities and patterns are informed guesses, say so.",
     "Always respond by calling the `exam_report` tool.",
     "\n--- Class memory ---",
-    buildClassMemoryContext(cls),
+    buildClassMemoryContext(input.cls),
     "\n--- Student profile ---",
-    buildStudentProfileContext(profile),
+    buildStudentProfileContext(input.profile),
   ].join("\n");
 
   const userContent = [
-    `Past exams (${pastExams.length}):\n${summarize(pastExams)}`,
-    `Homework history (${homework.length}):\n${summarize(homework)}`,
-    `Other materials/notes (${otherMaterials.length}):\n${summarize(otherMaterials)}`,
+    `Past exams (${input.pastExams.length}):\n${summarize(input.pastExams)}`,
+    `Homework history (${input.homework.length}):\n${summarize(input.homework)}`,
+    `Other materials/notes (${input.otherMaterials.length}):\n${summarize(input.otherMaterials)}`,
     "\nProduce: topic priority ranking, question-pattern analysis, estimated mark distribution, weak-area detection, a full mock exam matching this teacher's style, and a rapid review/memory sheet.",
   ].join("\n\n");
 
@@ -109,26 +117,5 @@ export async function generateExamReport(classId: string): Promise<ExamReportOut
   if (!toolUse || toolUse.type !== "tool_use") {
     throw new Error("Model did not return a structured exam report.");
   }
-  const output = toolUse.input as ExamReportOutput;
-
-  await prisma.examReport.create({
-    data: {
-      classId,
-      topicPriority: JSON.stringify(output.topic_priority),
-      patternAnalysis: output.question_pattern_analysis,
-      markDistribution: JSON.stringify(output.mark_distribution),
-      weakAreas: JSON.stringify(output.weak_areas),
-      mockExam: output.mock_exam,
-      reviewSheet: output.review_sheet,
-    },
-  });
-
-  if (output.topic_priority.length) {
-    await prisma.class.update({
-      where: { id: classId },
-      data: { topicPriorities: JSON.stringify(output.topic_priority) },
-    });
-  }
-
-  return output;
+  return toolUse.input as ExamReportOutput;
 }
