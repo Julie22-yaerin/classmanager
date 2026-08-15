@@ -88,6 +88,19 @@ plain "Deploy from GitHub" with no volume or database provisioning needed:
 3. In Firebase Console → Authentication → Settings → **Authorized domains**, add the Railway
    deployment's domain so sign-in works there.
 
+## Deploying to Vercel
+
+Also stateless, so a plain GitHub import works the same way:
+
+1. Import the repo in Vercel, keep the default Next.js build settings.
+2. Set the same env vars as `.env.example` in the Vercel project's **Settings → Environment
+   Variables** (all three environments — Production/Preview/Development).
+3. **Google sign-in will fail with "unauthorized-domain" until you add Vercel's domain(s)** to
+   Firebase Console → Authentication → Settings → **Authorized domains** — the production domain
+   (e.g. `your-app.vercel.app` or a custom domain) and, if you want Google sign-in to also work on
+   PR preview deployments, their `*.vercel.app` preview domains too. Email/password sign-in doesn't
+   need this — only `signInWithPopup` for Google checks the domain allowlist.
+
 ## Security notes
 
 - **No cookies, so CSRF doesn't apply the usual way**: auth is a Firebase ID token sent as a

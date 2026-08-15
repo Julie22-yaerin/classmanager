@@ -67,7 +67,7 @@ export default function OnboardingPage() {
         aiStyle,
         onboardingComplete: true,
       });
-      router.push("/");
+      router.push("/app");
     } finally {
       setSaving(false);
     }

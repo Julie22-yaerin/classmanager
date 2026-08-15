@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/authContext";
 import LaurelAvatar from "@/components/LaurelAvatar";
 
 const LINKS = [
-  { href: "/", label: "Chat" },
+  { href: "/app", label: "Chat" },
   { href: "/daily", label: "Daily" },
   { href: "/setup", label: "Teachers & Classes" },
   { href: "/deadlines", label: "Deadlines" },
@@ -33,7 +33,7 @@ export default function Sidebar() {
       </div>
       <nav className="flex flex-col gap-0.5 px-2">
         {LINKS.map((link) => {
-          const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+          const active = pathname.startsWith(link.href);
           return (
             <Link
               key={link.href}

@@ -41,7 +41,7 @@ export default function LoginPage() {
   async function afterAuth() {
     if (auth.currentUser) {
       const profile = await ensureUserProfile(auth.currentUser);
-      router.push(profile.onboardingComplete ? "/" : "/onboarding");
+      router.push(profile.onboardingComplete ? "/app" : "/onboarding");
     }
   }
 
@@ -70,8 +70,19 @@ export default function LoginPage() {
     try {
       await signInWithPopup(auth, googleProvider);
       await afterAuth();
-    } catch {
-      setError("Đăng nhập Google thất bại, thử lại nhé.");
+    } catch (err) {
+      const code = (err as { code?: string }).code ?? "";
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        // User closed the popup themselves — not an error worth showing.
+      } else if (code === "auth/unauthorized-domain") {
+        setError(
+          `Domain "${window.location.hostname}" chưa được cấp phép trong Firebase Console → Authentication → Settings → Authorized domains — thêm domain này vào đó.`,
+        );
+      } else if (code === "auth/popup-blocked") {
+        setError("Trình duyệt đang chặn popup đăng nhập — cho phép popup cho trang này rồi thử lại.");
+      } else {
+        setError("Đăng nhập Google thất bại, thử lại nhé.");
+      }
     } finally {
       setBusy(false);
     }
