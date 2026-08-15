@@ -27,6 +27,8 @@ export async function ensureUserProfile(user: User): Promise<UserProfile> {
     communicationStyle: null,
     learningPreferences: null,
     weaknesses: null,
+    allowRecordingUploads: true,
+    calendarAutoSync: false,
   };
   await setDoc(ref, profile);
   return profile;

@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/authContext";
 import CookieConsent from "@/components/CookieConsent";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,16 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
   },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "School AI",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#050506",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -42,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="h-full bg-white text-zinc-900 dark:bg-[#212121] dark:text-zinc-50">
         <AuthProvider>{children}</AuthProvider>
         <CookieConsent />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

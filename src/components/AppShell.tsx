@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import LaurelAvatar from "@/components/LaurelAvatar";
+import MaterialsConsentModal from "@/components/MaterialsConsentModal";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -18,6 +19,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <MaterialsConsentModal />
       {open && (
         <button
           aria-label="Close menu"
