@@ -65,7 +65,7 @@ export default function ClassDetailPage() {
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         <p className="text-sm text-zinc-500">Class not found.</p>
         <Link href="/setup" className="text-sm text-zinc-900 underline dark:text-zinc-50">
-          Back to Teachers &amp; Classes
+          Back to Classes
         </Link>
       </main>
     );
@@ -74,7 +74,7 @@ export default function ClassDetailPage() {
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
       <Link href="/setup" className="text-sm text-zinc-500 hover:underline">
-        ← Teachers &amp; Classes
+        ← Classes
       </Link>
       <h1 className="mt-1 text-xl font-semibold">
         {cls.subject} · Grade {cls.grade}

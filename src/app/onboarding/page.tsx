@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/authContext";
 import { updateUserProfile } from "@/lib/firestore/profile";
-import { createTeacher } from "@/lib/firestore/teachers";
 import { createClass } from "@/lib/firestore/classes";
 import LaurelAvatar from "@/components/LaurelAvatar";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -49,11 +48,8 @@ export default function OnboardingPage() {
     setSaving(true);
     try {
       if (teacherName.trim() && teacherSubject.trim() && classGrade.trim()) {
-        const teacher = await createTeacher(user.uid, teacherName.trim(), teacherSubject.trim());
         await createClass(user.uid, {
-          teacherId: teacher.id,
-          teacherName: teacher.name,
-          teacherSubject: teacher.subject,
+          teacherName: teacherName.trim(),
           grade: classGrade.trim(),
           subject: teacherSubject.trim(),
           textbook: null,

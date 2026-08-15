@@ -26,14 +26,6 @@ export interface UserProfile {
 
   // Privacy & data preferences
   allowRecordingUploads: boolean;
-  calendarAutoSync: boolean;
-}
-
-export interface Teacher {
-  id: string;
-  name: string;
-  subject: string;
-  createdAt: string;
 }
 
 export interface TeacherPlaybook {
@@ -48,9 +40,7 @@ export interface TeacherPlaybook {
 
 export interface ClassDoc {
   id: string;
-  teacherId: string;
   teacherName: string;
-  teacherSubject: string;
   grade: string;
   subject: string;
   textbook: string | null;

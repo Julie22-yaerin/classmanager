@@ -15,7 +15,6 @@ import { listMessages, createMessage } from "@/lib/firestore/messages";
 import { createMaterial } from "@/lib/firestore/materials";
 import { createDeadlines } from "@/lib/firestore/deadlines";
 import { applyMemoryUpdate, appendImportantDates } from "@/lib/firestore/classes";
-import { createCalendarEvent } from "@/lib/googleCalendar";
 import { callApi } from "@/lib/apiClient";
 import { toClassContext, toProfileContext } from "@/lib/mappers";
 import type { ClassDoc, MessageDoc, UserProfile } from "@/lib/firestore/types";
@@ -172,11 +171,6 @@ export default function ChatPage() {
             cls,
             result.deadlines.map((d) => ({ title: d.title, date: d.due_date, source: sourceType })),
           );
-          if (profile?.calendarAutoSync) {
-            for (const d of result.deadlines) {
-              if (d.due_date) await createCalendarEvent({ title: `${cls.subject}: ${d.title}`, description: d.notes ?? undefined, date: d.due_date });
-            }
-          }
         }
       }
 
