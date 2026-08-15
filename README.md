@@ -32,6 +32,16 @@ Open http://localhost:3000, then go to **Settings** and add your Anthropic API k
 
 Then go to **Teachers & Classes** to onboard a teacher and a class, and start chatting.
 
+## Deploying to Railway
+
+The repo includes `railway.json` (Nixpacks build, `npm run start` — which runs `prisma migrate deploy` before starting — as the start command), so a plain "Deploy from GitHub" works. Two things need to be set by hand in the Railway dashboard:
+
+1. **New Project → Deploy from GitHub repo** → select this repo/branch. Railway builds and deploys automatically on every push.
+2. **Add a Volume** (Settings → Volumes) mounted at `/data`. Without this, the SQLite file lives on the container's ephemeral disk and is wiped on every redeploy.
+3. **Set the `DATABASE_URL` environment variable** to `file:/data/dev.db` (pointing at the volume) — this overrides the local-dev default of `file:./dev.db`.
+
+That's it — no `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` env vars are required on the server. Once deployed, open the app and add your API key under **Settings**, same as running locally (it's stored per-browser in an httpOnly cookie). Note that on a shared deployment, each visitor's browser needs its own key set the same way.
+
 ## Notes on scope
 
 This is the MVP described in DRM v0.3: teacher/class creation, one unified chat, tagging, PDF/image/audio input, class memory, teacher/class analysis, Daily Mode, and Exam Mode. Group projects, integrations, social features, marketplace, and extra dashboards are intentionally out of scope.
