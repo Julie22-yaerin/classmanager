@@ -15,6 +15,7 @@ import { listMessages, createMessage } from "@/lib/firestore/messages";
 import { createMaterial } from "@/lib/firestore/materials";
 import { createDeadlines } from "@/lib/firestore/deadlines";
 import { applyMemoryUpdate, appendImportantDates } from "@/lib/firestore/classes";
+import { createCalendarEvent } from "@/lib/googleCalendar";
 import { callApi } from "@/lib/apiClient";
 import { toClassContext, toProfileContext } from "@/lib/mappers";
 import type { ClassDoc, MessageDoc, UserProfile } from "@/lib/firestore/types";
@@ -74,6 +75,10 @@ export default function ChatPage() {
     setAttachError(null);
     try {
       const att = await fileToAttachment(file);
+      if (att.sourceType === "audio" && profile?.allowRecordingUploads === false) {
+        setAttachError("Audio uploads are turned off — enable them in Settings → Privacy & Data.");
+        return;
+      }
       setAttachment(att);
     } catch (err) {
       setAttachError(err instanceof Error ? err.message : "Could not attach file");
@@ -167,6 +172,11 @@ export default function ChatPage() {
             cls,
             result.deadlines.map((d) => ({ title: d.title, date: d.due_date, source: sourceType })),
           );
+          if (profile?.calendarAutoSync) {
+            for (const d of result.deadlines) {
+              if (d.due_date) await createCalendarEvent({ title: `${cls.subject}: ${d.title}`, description: d.notes ?? undefined, date: d.due_date });
+            }
+          }
         }
       }
 
@@ -309,7 +319,11 @@ export default function ChatPage() {
               <label className="flex shrink-0 cursor-pointer items-center justify-center rounded-full p-2 text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800">
                 <input
                 type="file"
-                accept="image/*,application/pdf,audio/mpeg,audio/mp3,audio/wav,audio/x-wav"
+                accept={
+                  profile?.allowRecordingUploads === false
+                    ? "image/*,application/pdf"
+                    : "image/*,application/pdf,audio/mpeg,audio/mp3,audio/wav,audio/x-wav"
+                }
                 onChange={onFileChange}
                 className="hidden"
               />

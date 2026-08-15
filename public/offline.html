@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline — School AI</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        min-height: 100vh;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: #050506;
+        color: #fafafa;
+        font-family: system-ui, -apple-system, sans-serif;
+        text-align: center;
+        padding: 24px;
+      }
+      .dot {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #f3cf6b 0%, #c8942f 70%);
+      }
+      button {
+        margin-top: 8px;
+        border-radius: 999px;
+        border: none;
+        background: #fff;
+        color: #111;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      p {
+        color: #a1a1aa;
+        font-size: 14px;
+        max-width: 280px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dot"></div>
+    <h1 style="font-size: 18px; font-weight: 600; margin: 0">You're offline</h1>
+    <p>School AI needs a connection to reach your classes. Reconnect and try again.</p>
+    <button onclick="location.reload()">Retry</button>
+  </body>
+</html>

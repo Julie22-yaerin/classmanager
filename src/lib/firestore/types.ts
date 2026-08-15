@@ -23,6 +23,10 @@ export interface UserProfile {
   communicationStyle: string | null;
   learningPreferences: string | null;
   weaknesses: string | null;
+
+  // Privacy & data preferences
+  allowRecordingUploads: boolean;
+  calendarAutoSync: boolean;
 }
 
 export interface Teacher {
