@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import type { ExamReportDTO } from "@/lib/clientTypes";
+import { useAuth } from "@/lib/authContext";
+import { callApi, MissingApiKeyClientError } from "@/lib/apiClient";
+import { toClassContext, toProfileContext } from "@/lib/mappers";
+import { listMaterialsForClass } from "@/lib/firestore/materials";
+import { createExamReport, listExamReports } from "@/lib/firestore/examReports";
+import { saveTopicPriorities } from "@/lib/firestore/classes";
+import { getUserProfile } from "@/lib/firestore/profile";
+import type { ClassDoc, ExamReportDoc, MaterialDoc } from "@/lib/firestore/types";
+import type { ExamReportOutput, MaterialSummary } from "@/lib/examMode";
 
 interface ParsedTopic {
   topic: string;
@@ -9,23 +17,20 @@ interface ParsedTopic {
   reason?: string;
   evidence?: string;
 }
-interface ParsedMark {
-  topic: string;
-  estimated_percent: number;
+
+function toMaterialSummary(m: MaterialDoc): MaterialSummary {
+  return {
+    tag: m.tag,
+    topic: m.topic,
+    excerpt: m.rawContent || m.extractedText || m.fileName || "",
+    analysis: m.analysis ? JSON.stringify(m.analysis) : null,
+  };
 }
 
-function safeParse<T>(json: string, fallback: T): T {
-  try {
-    return JSON.parse(json) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function ReportView({ report }: { report: ExamReportDTO }) {
-  const topicPriority = safeParse<ParsedTopic[]>(report.topicPriority, []);
-  const markDistribution = safeParse<ParsedMark[]>(report.markDistribution, []);
-  const weakAreas = safeParse<ParsedTopic[]>(report.weakAreas, []);
+function ReportView({ report }: { report: ExamReportDoc }) {
+  const topicPriority = report.topicPriority as ParsedTopic[];
+  const markDistribution = report.markDistribution;
+  const weakAreas = report.weakAreas as ParsedTopic[];
 
   return (
     <div className="mt-4 flex flex-col gap-4 text-sm">
@@ -80,22 +85,53 @@ function ReportView({ report }: { report: ExamReportDTO }) {
   );
 }
 
-export default function ExamModePanel({ classId, initialReports }: { classId: string; initialReports: ExamReportDTO[] }) {
+export default function ExamModePanel({ cls, initialReports }: { cls: ClassDoc; initialReports: ExamReportDoc[] }) {
+  const { user } = useAuth();
   const [reports, setReports] = useState(initialReports);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [missingKey, setMissingKey] = useState(false);
 
   async function generate() {
+    if (!user) return;
     setBusy(true);
     setError(null);
+    setMissingKey(false);
     try {
-      const res = await fetch(`/api/exam-mode/${classId}`, { method: "POST" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to generate report");
-      const reportsRes = await fetch(`/api/exam-mode/${classId}`);
-      setReports((await reportsRes.json()).reports ?? []);
+      const [materials, profile] = await Promise.all([listMaterialsForClass(user.uid, cls.id), getUserProfile(user.uid)]);
+      const pastExams = materials.filter((m) => m.tag === "PastExam").map(toMaterialSummary);
+      const homework = materials.filter((m) => m.tag === "Homework").map(toMaterialSummary);
+      const otherMaterials = materials.filter((m) => !["PastExam", "Homework"].includes(m.tag)).map(toMaterialSummary);
+
+      const { report } = await callApi<{ report: ExamReportOutput }>("/api/exam-mode", {
+        cls: toClassContext(cls),
+        profile: toProfileContext(profile),
+        pastExams,
+        homework,
+        otherMaterials,
+      });
+
+      const saved = await createExamReport(user.uid, {
+        classId: cls.id,
+        topicPriority: report.topic_priority,
+        patternAnalysis: report.question_pattern_analysis,
+        markDistribution: report.mark_distribution,
+        weakAreas: report.weak_areas,
+        mockExam: report.mock_exam,
+        reviewSheet: report.review_sheet,
+        createdAt: new Date().toISOString(),
+      });
+      if (report.topic_priority.length) await saveTopicPriorities(user.uid, cls.id, report.topic_priority);
+
+      const refreshed = await listExamReports(user.uid, cls.id);
+      setReports(refreshed.length ? refreshed : [saved]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate report");
+      if (err instanceof MissingApiKeyClientError) {
+        setMissingKey(true);
+        setError(err.message);
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to generate report");
+      }
     } finally {
       setBusy(false);
     }
@@ -118,7 +154,11 @@ export default function ExamModePanel({ classId, initialReports }: { classId: st
           {busy ? "Generating…" : "Generate exam prep"}
         </button>
       </div>
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && (
+        <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+          {error} {missingKey && <a href="/settings" className="underline font-medium">Add your API key</a>}
+        </p>
+      )}
       {reports.length === 0 && !busy && <p className="mt-3 text-sm text-zinc-500">No exam prep generated yet.</p>}
       {reports[0] && <ReportView report={reports[0]} />}
     </section>

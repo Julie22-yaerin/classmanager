@@ -1,5 +1,4 @@
-import type { ClassDetailDTO } from "@/lib/clientTypes";
-import type { TopicPriorityItem, ImportantDateItem } from "@/lib/types";
+import type { ClassDoc } from "@/lib/firestore/types";
 
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
@@ -12,15 +11,9 @@ function Field({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export default function ClassMemoryPanel({ cls }: { cls: ClassDetailDTO }) {
-  let topicPriorities: TopicPriorityItem[] = [];
-  let importantDates: ImportantDateItem[] = [];
-  try {
-    if (cls.topicPriorities) topicPriorities = JSON.parse(cls.topicPriorities);
-  } catch {}
-  try {
-    if (cls.importantDates) importantDates = JSON.parse(cls.importantDates);
-  } catch {}
+export default function ClassMemoryPanel({ cls }: { cls: ClassDoc }) {
+  const topicPriorities = cls.topicPriorities ?? [];
+  const importantDates = cls.importantDates ?? [];
 
   return (
     <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -39,7 +32,7 @@ export default function ClassMemoryPanel({ cls }: { cls: ClassDetailDTO }) {
           <dd className="mt-1">
             {topicPriorities.length === 0 && <span className="text-sm text-zinc-400 italic">Not learned yet</span>}
             <ul className="flex flex-col gap-1">
-              {topicPriorities
+              {[...topicPriorities]
                 .sort((a, b) => b.weight - a.weight)
                 .map((t, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">

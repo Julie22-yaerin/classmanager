@@ -1,11 +1,10 @@
-import { prisma } from "@/lib/db";
 import { getAnthropicClient, CHAT_MODEL } from "@/lib/ai";
 
-export interface ClassOption {
+export interface RoutableClass {
   id: string;
-  grade: string;
   subject: string;
-  teacher: { name: string; subject: string };
+  grade: string;
+  teacherName: string;
 }
 
 export interface ClassRouterResult {
@@ -15,12 +14,10 @@ export interface ClassRouterResult {
 }
 
 /**
- * Identify which class a chat input belongs to. If the caller already
- * knows (user picked a class in the UI), this is skipped entirely.
+ * Identify which class a chat input belongs to, given the caller's list of
+ * classes (loaded client-side from Firestore). Pure — no DB access here.
  */
-export async function identifyClass(content: string): Promise<ClassRouterResult> {
-  const classes = await prisma.class.findMany({ include: { teacher: true } });
-
+export async function identifyClass(content: string, classes: RoutableClass[]): Promise<ClassRouterResult> {
   if (classes.length === 0) {
     return { classId: null, needsClarification: true, reason: "No classes exist yet — create one first." };
   }
@@ -29,7 +26,7 @@ export async function identifyClass(content: string): Promise<ClassRouterResult>
   }
 
   const listing = classes
-    .map((c, i) => `${i + 1}. id=${c.id} — ${c.subject} (Grade ${c.grade}), teacher ${c.teacher.name}`)
+    .map((c, i) => `${i + 1}. id=${c.id} — ${c.subject} (Grade ${c.grade}), teacher ${c.teacherName}`)
     .join("\n");
 
   const client = await getAnthropicClient();

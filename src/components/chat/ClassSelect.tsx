@@ -1,6 +1,6 @@
 "use client";
 
-import type { ClassDTO } from "@/lib/clientTypes";
+import type { ClassDoc } from "@/lib/firestore/types";
 
 export default function ClassSelect({
   classes,
@@ -8,7 +8,7 @@ export default function ClassSelect({
   onChange,
   compact = false,
 }: {
-  classes: ClassDTO[];
+  classes: ClassDoc[];
   value: string;
   onChange: (classId: string) => void;
   compact?: boolean;
@@ -23,7 +23,7 @@ export default function ClassSelect({
         <option value="auto">Auto-detect class</option>
         {classes.map((c) => (
           <option key={c.id} value={c.id}>
-            {c.subject} · Grade {c.grade} ({c.teacher.name})
+            {c.subject} · Grade {c.grade} ({c.teacherName})
           </option>
         ))}
       </select>
@@ -41,7 +41,7 @@ export default function ClassSelect({
         <option value="auto">Auto-detect</option>
         {classes.map((c) => (
           <option key={c.id} value={c.id}>
-            {c.subject} · Grade {c.grade} ({c.teacher.name})
+            {c.subject} · Grade {c.grade} ({c.teacherName})
           </option>
         ))}
       </select>

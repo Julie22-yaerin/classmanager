@@ -1,16 +1,21 @@
-import { TAG_LABELS } from "@/lib/types";
-import type { ChatMessageDTO, ClassDTO } from "@/lib/clientTypes";
+import { TAG_LABELS, HOMEWORK_MODE_LABELS } from "@/lib/types";
+import type { MessageDoc, ClassDoc } from "@/lib/firestore/types";
 import LaurelAvatar from "@/components/LaurelAvatar";
 
 export default function MessageBubble({
   message,
   cls,
 }: {
-  message: ChatMessageDTO;
-  cls: ClassDTO | undefined;
+  message: MessageDoc;
+  cls: ClassDoc | undefined;
 }) {
   const isUser = message.role === "user";
-  const meta = [message.tag ? TAG_LABELS[message.tag] : null, cls ? `${cls.subject} · ${cls.teacher.name}` : null, message.fileName ? `📎 ${message.fileName}` : null]
+  const meta = [
+    message.tag ? TAG_LABELS[message.tag] : null,
+    message.homeworkMode ? HOMEWORK_MODE_LABELS[message.homeworkMode] : null,
+    cls ? `${cls.subject} · ${cls.teacherName}` : null,
+    message.fileName ? `📎 ${message.fileName}` : null,
+  ]
     .filter(Boolean)
     .join("  ·  ");
 
