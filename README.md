@@ -33,32 +33,40 @@ the minimum necessary time.
 - Firebase Auth (email/password + Google) + Firestore (all app data, client SDK, scoped per user
   by Firestore Security Rules — see `firestore.rules`)
 - Next.js API routes are stateless AI-compute endpoints only: they verify the caller's Firebase ID
-  token (no service account needed — verified against Google's public JWKS) and call Anthropic.
-  They never touch Firestore directly; the authenticated client reads/writes its own data.
-- Anthropic Claude (Messages API, tool-use for structured output) — BYOK, key stored in an httpOnly
-  cookie per browser
-- Optional: OpenAI Whisper for Class Recording audio transcription — BYOK
+  token (no service account needed — verified against Google's public JWKS), rate-limit per user,
+  and call the model. They never touch Firestore directly; the authenticated client reads/writes
+  its own data.
+- AI models via **OpenRouter**, using two server-side keys:
+  - `OPENROUTER_MAIN_API_KEY` — reasoning: chat replies, exam analysis, teacher playbook, daily
+    triage, class routing. Model: `nvidia/nemotron-3-ultra-550b-a55b:free`.
+  - `OPENROUTER_PERCEPTION_API_KEY` — OCR (image/PDF) and audio transcription. Model:
+    `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free`.
+  - Both are currently pinned to free-tier OpenRouter models. Swap the model IDs in
+    `src/lib/ai.ts` if the account has paid credit and you want higher-quality models instead —
+    audio transcription in particular requires OpenRouter account credit even on nominally free
+    models (image/PDF extraction and text reasoning don't).
 
 ## Running locally
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in your Firebase web app config
+cp .env.example .env.local   # fill in your Firebase web app config + OpenRouter keys
 npm run dev
 ```
 
 **Before first use**, in the [Firebase Console](https://console.firebase.google.com/) for your project:
 
 1. **Authentication → Sign-in method** — enable Email/Password and Google.
-2. **Firestore Database → Create database** (production mode, pick a region) — a fresh project has
+2. **Authentication → Settings** — turn on "Email enumeration protection" (keeps sign-in/reset
+   error messages from revealing which emails have accounts).
+3. **Firestore Database → Create database** (production mode, pick a region) — a fresh project has
    no Firestore database provisioned until you do this once.
-3. **Firestore → Rules** — paste in the contents of `firestore.rules` from this repo (scopes every
-   user to their own `users/{uid}` document tree).
+4. **Firestore → Rules** — paste in the contents of `firestore.rules` from this repo (scopes every
+   user to their own `users/{uid}` document tree, and caps the size of the main text fields so a
+   client can't write oversized documents directly).
 
-Then open http://localhost:3000, sign up, go through onboarding, and in **Settings** add your
-Anthropic API key (required for chat) and, optionally, an OpenAI API key (only used to transcribe
-audio recordings — without it, paste a transcript instead). Keys are stored in an httpOnly cookie
-on your device and used server-side only; they're per-browser, not per-account.
+Then open http://localhost:3000, sign up, go through onboarding, and start chatting — the app's
+own OpenRouter keys handle all AI calls, nothing to configure per-user.
 
 ## Deploying to Railway
 
@@ -67,15 +75,39 @@ plain "Deploy from GitHub" with no volume or database provisioning needed:
 
 1. **New Project → Deploy from GitHub repo** → select this repo/branch. Railway builds via
    Nixpacks and runs `npm run start` (see `railway.json`) automatically on every push.
-2. Set the `NEXT_PUBLIC_FIREBASE_*` environment variables (from `.env.example`) in the Railway
-   service's Variables tab — same values as your local `.env.local`. These are the public Firebase
-   web config, safe to expose; access is controlled by Firestore Security Rules and Firebase Auth,
-   not by secrecy.
+   `engines.node` in `package.json` pins a Node version new enough for Next.js.
+2. Set the env vars from `.env.example` in the Railway service's Variables tab — the
+   `NEXT_PUBLIC_FIREBASE_*` values (same as local `.env.local`) plus `OPENROUTER_MAIN_API_KEY` and
+   `OPENROUTER_PERCEPTION_API_KEY` (mark these two as secret in Railway's UI).
 3. In Firebase Console → Authentication → Settings → **Authorized domains**, add the Railway
    deployment's domain so sign-in works there.
 
-No `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` env vars are required on the server — every user adds
-their own key under **Settings** after signing in.
+## Security notes
+
+- **No cookies, so CSRF doesn't apply the usual way**: auth is a Firebase ID token sent as a
+  Bearer header, not an ambient cookie, so a foreign page can't ride a signed-in session — it has
+  no token to attach. There's nothing to set `SameSite`/secure flags on because the app sets no
+  auth cookies.
+- **CORS**: no `Access-Control-Allow-Origin` header is set anywhere, so the API routes are
+  same-origin only by default.
+- **Uploads**: attachment MIME types are whitelisted server-side (`isAllowedMimeType` in
+  `src/app/api/chat/route.ts`), independent of what the browser reports.
+- **Prompt injection**: every system prompt that processes student-provided content explicitly
+  instructs the model to treat that content as untrusted data, not instructions. Structured
+  tool-forced output also limits blast radius — the model can only fill defined JSON fields, not
+  take free-form action.
+- **Rate limiting**: per-user, per-route in-memory limits on every AI-compute endpoint
+  (`src/lib/rateLimit.ts`) — since the app pays for AI usage centrally now (not BYOK), this is
+  what keeps one account from exhausting the shared quota.
+- **Request size caps**: `src/lib/requestGuard.ts` rejects oversized bodies before they're parsed;
+  attachments are separately capped at ~15MB.
+- **Security event logging**: rejected uploads, rate-limit trips, and auth failures are logged as
+  structured JSON via `console.warn` (`src/lib/securityLog.ts`) — captured by Railway's log tail.
+- **Known gaps** (would need Firebase Admin / a service account to close, which this app
+  deliberately doesn't hold): account lockout after repeated failed logins, and any server-side
+  moderation of what gets written to Firestore beyond the size/ownership rules — writes go
+  client → Firestore directly, so `firestore.rules` is the actual enforcement point, not the API
+  layer.
 
 ## Notes on scope
 

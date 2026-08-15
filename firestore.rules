@@ -4,12 +4,52 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Every user's data lives under users/{uid} and its subcollections
     // (teachers, classes, materials, messages, deadlines, examReports).
-    // A signed-in user may only read/write their own tree.
-    match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+    // A signed-in user may only read/write their own tree. Writes are also
+    // capped in size so a compromised or malicious client can't stuff huge
+    // blobs into Firestore directly (client SDK writes bypass the Next.js
+    // API layer entirely, so limits belong here too, not just server-side).
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
 
-      match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+    function withinSize(field, maxLen) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        (request.resource.data[field] is string && request.resource.data[field].size() <= maxLen);
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid) && withinSize('weaknesses', 5000) && withinSize('academicLevel', 1000);
+
+      match /teachers/{teacherId} {
+        allow read, write: if isOwner(uid) && withinSize('name', 200) && withinSize('subject', 200);
+      }
+
+      match /classes/{classId} {
+        allow read, write: if isOwner(uid) &&
+          withinSize('curriculum', 20000) &&
+          withinSize('teacherPersona', 5000) &&
+          withinSize('teachingStyle', 5000) &&
+          withinSize('questionStyle', 5000) &&
+          withinSize('assessmentPatterns', 5000);
+      }
+
+      match /materials/{materialId} {
+        allow read, write: if isOwner(uid) &&
+          withinSize('rawContent', 20000) &&
+          withinSize('extractedText', 20000);
+      }
+
+      match /messages/{messageId} {
+        allow read, write: if isOwner(uid) && withinSize('content', 20000);
+      }
+
+      match /deadlines/{deadlineId} {
+        allow read, write: if isOwner(uid) && withinSize('title', 500) && withinSize('notes', 2000);
+      }
+
+      match /examReports/{reportId} {
+        allow read, write: if isOwner(uid) && withinSize('mockExam', 30000) && withinSize('reviewSheet', 30000);
       }
     }
   }
