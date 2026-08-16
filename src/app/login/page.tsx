@@ -17,26 +17,26 @@ function friendlyError(code: string, message?: string): string {
     case "auth/invalid-credential":
     case "auth/wrong-password":
     case "auth/user-not-found":
-      return "Email hoặc mật khẩu không đúng.";
+      return "Incorrect email or password.";
     case "auth/email-already-in-use":
-      return "Email này đã có tài khoản — thử đăng nhập thay vì đăng ký.";
+      return "That email already has an account — try signing in instead.";
     case "auth/weak-password":
-      return "Mật khẩu cần ít nhất 6 ký tự.";
+      return "Password needs at least 6 characters.";
     case "auth/invalid-email":
-      return "Email không hợp lệ.";
+      return "Invalid email.";
     case "auth/operation-not-allowed":
-      return "Đăng nhập bằng Email/Mật khẩu chưa được bật trong Firebase Console → Authentication → Sign-in method.";
+      return "Email/password sign-in isn't enabled in Firebase Console → Authentication → Sign-in method.";
     case "auth/api-key-not-valid":
     case "auth/invalid-api-key":
-      return "Firebase API key không hợp lệ trên domain này — kiểm tra lại biến NEXT_PUBLIC_FIREBASE_API_KEY.";
+      return "Firebase API key isn't valid for this domain — check the NEXT_PUBLIC_FIREBASE_API_KEY variable.";
     case "auth/network-request-failed":
-      return "Không kết nối được tới Firebase — kiểm tra mạng rồi thử lại.";
+      return "Couldn't connect to Firebase — check your connection and try again.";
     case "auth/too-many-requests":
-      return "Thử sai quá nhiều lần — đợi một lát rồi thử lại.";
+      return "Too many failed attempts — wait a moment and try again.";
     default:
       // Surfaced verbatim so an unrecognized failure can actually be diagnosed
       // instead of hidden behind a generic message.
-      return `Có lỗi xảy ra (${code || "không rõ mã lỗi"}): ${message ?? "không rõ nguyên nhân"}. Thử lại nhé.`;
+      return `Something went wrong (${code || "unknown code"}): ${message ?? "unknown cause"}. Please try again.`;
   }
 }
 
@@ -91,12 +91,12 @@ export default function LoginPage() {
         // User closed the popup themselves — not an error worth showing.
       } else if (code === "auth/unauthorized-domain") {
         setError(
-          `Domain "${window.location.hostname}" chưa được cấp phép trong Firebase Console → Authentication → Settings → Authorized domains — thêm domain này vào đó.`,
+          `Domain "${window.location.hostname}" isn't authorized in Firebase Console → Authentication → Settings → Authorized domains — add it there.`,
         );
       } else if (code === "auth/popup-blocked") {
-        setError("Trình duyệt đang chặn popup đăng nhập — cho phép popup cho trang này rồi thử lại.");
+        setError("Your browser is blocking the sign-in popup — allow popups for this site and try again.");
       } else {
-        setError("Đăng nhập Google thất bại, thử lại nhé.");
+        setError("Google sign-in failed, please try again.");
       }
     } finally {
       setBusy(false);
@@ -105,7 +105,7 @@ export default function LoginPage() {
 
   async function onForgotPassword() {
     if (!email.trim()) {
-      setError("Nhập email trước, rồi bấm quên mật khẩu.");
+      setError("Enter your email first, then tap forgot password.");
       return;
     }
     setError(null);
@@ -115,7 +115,7 @@ export default function LoginPage() {
     } catch {
       // Same message whether or not the email exists — avoids leaking which emails have accounts.
     } finally {
-      setResetStatus("Nếu email này có tài khoản, chúng tôi đã gửi link đặt lại mật khẩu.");
+      setResetStatus("If an account exists for this email, we've sent a password reset link.");
     }
   }
 
@@ -124,8 +124,8 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3">
           <LaurelAvatar size={48} />
-          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">School AI</h1>
-          <p className="text-sm text-zinc-500">{mode === "signin" ? "Đăng nhập để tiếp tục" : "Tạo tài khoản mới"}</p>
+          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Lyceum</h1>
+          <p className="text-sm text-zinc-500">{mode === "signin" ? "Sign in to continue" : "Create an account"}</p>
         </div>
 
         {mode === "signup" && (
@@ -136,7 +136,7 @@ export default function LoginPage() {
               onChange={(e) => setAgeConfirmed(e.target.checked)}
               className="mt-0.5"
             />
-            Tôi từ 16 tuổi trở lên, hoặc tài khoản này được phụ huynh/người giám hộ tạo và đồng ý cho tôi sử dụng.
+            I&apos;m 16 or older, or this account was created by a parent/guardian who consents to my use of it.
           </label>
         )}
 
@@ -152,12 +152,12 @@ export default function LoginPage() {
             <path fill="#FBBC05" d="M3.96 10.71A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3-2.33z" />
             <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z" />
           </svg>
-          Tiếp tục với Google
+          Continue with Google
         </button>
 
         <div className="mb-4 flex items-center gap-3 text-xs text-zinc-400">
           <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-          hoặc
+          or
           <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
         </div>
 
@@ -176,12 +176,12 @@ export default function LoginPage() {
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mật khẩu"
+            placeholder="Password"
             className="rounded-xl border border-zinc-300 px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
           />
           {mode === "signin" && (
             <button type="button" onClick={onForgotPassword} className="self-end text-xs text-zinc-500 hover:underline">
-              Quên mật khẩu?
+              Forgot password?
             </button>
           )}
           {resetStatus && <p className="text-sm text-green-600 dark:text-green-400">{resetStatus}</p>}
@@ -191,12 +191,12 @@ export default function LoginPage() {
             disabled={busy || blockedBySignupGate}
             className="rounded-full bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-zinc-900"
           >
-            {busy ? "Đang xử lý…" : mode === "signin" ? "Đăng nhập" : "Đăng ký"}
+            {busy ? "Processing…" : mode === "signin" ? "Sign in" : "Sign up"}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-zinc-500">
-          {mode === "signin" ? "Chưa có tài khoản?" : "Đã có tài khoản?"}{" "}
+          {mode === "signin" ? "Don't have an account?" : "Already have an account?"}{" "}
           <button
             type="button"
             onClick={() => {
@@ -205,17 +205,17 @@ export default function LoginPage() {
             }}
             className="font-medium text-zinc-900 underline dark:text-zinc-50"
           >
-            {mode === "signin" ? "Đăng ký" : "Đăng nhập"}
+            {mode === "signin" ? "Sign up" : "Sign in"}
           </button>
         </p>
 
         <p className="mt-6 text-center text-xs text-zinc-400">
           <a href="/privacy" className="underline">
-            Chính sách quyền riêng tư
+            Privacy Policy
           </a>{" "}
           ·{" "}
           <a href="/terms" className="underline">
-            Điều khoản dịch vụ
+            Terms of Service
           </a>
         </p>
       </div>

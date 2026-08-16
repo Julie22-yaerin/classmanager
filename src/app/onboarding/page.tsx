@@ -81,7 +81,7 @@ export default function OnboardingPage() {
     <div className="flex min-h-screen flex-col items-center bg-white px-4 py-12 dark:bg-[#212121]">
       <div className="mb-8 flex items-center gap-2">
         <LaurelAvatar size={32} />
-        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">School AI</span>
+        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Lyceum</span>
       </div>
 
       <div className="mb-8 flex gap-1.5">
@@ -94,7 +94,7 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div>
             <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">What are you here for?</h1>
-            <p className="mt-1 text-sm text-zinc-500">What do you want School AI to help you with?</p>
+            <p className="mt-1 text-sm text-zinc-500">What do you want Lyceum to help you with?</p>
             <div className="mt-6 flex flex-col gap-2">
               {GOALS.map((g) => (
                 <button

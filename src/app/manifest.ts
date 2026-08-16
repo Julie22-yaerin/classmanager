@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "School AI — one chat that learns your classes",
-    short_name: "School AI",
+    name: "Lyceum — one chat that learns your classes",
+    short_name: "Lyceum",
     description: "One chat that learns how each student's teachers, classes, curriculum, and assessment style actually work.",
     start_url: "/",
     display: "standalone",

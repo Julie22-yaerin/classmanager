@@ -4,7 +4,7 @@ import LaurelAvatar from "@/components/LaurelAvatar";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Terms for using School AI.",
+  description: "Terms for using Lyceum.",
   robots: { index: true, follow: true },
 };
 
@@ -13,7 +13,7 @@ export default function TermsPage() {
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-4 py-12 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
       <Link href="/" className="flex items-center gap-2 self-start">
         <LaurelAvatar size={28} />
-        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">School AI</span>
+        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Lyceum</span>
       </Link>
 
       <div>
@@ -22,7 +22,7 @@ export default function TermsPage() {
       </div>
 
       <p>
-        By creating an account and using School AI, you agree to the following. School AI is operated by the app
+        By creating an account and using Lyceum, you agree to the following. Lyceum is operated by the app
         operator, contactable at{" "}
         <a href="mailto:yris22@thelyceum.site" className="underline">
           yris22@thelyceum.site
@@ -43,7 +43,7 @@ export default function TermsPage() {
       <section>
         <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">What this is</h2>
         <p className="mt-2">
-          School AI is a study aid: it helps organize your classes, explain homework, analyze past exams, and prepare
+          Lyceum is a study aid: it helps organize your classes, explain homework, analyze past exams, and prepare
           study materials. It is not a substitute for your own understanding, your teacher&apos;s instruction, or your
           school&apos;s academic integrity policy. You&apos;re responsible for using it in line with whatever rules your
           school or teacher has around AI assistance — including, where relevant, disclosing its use.
@@ -99,7 +99,7 @@ export default function TermsPage() {
       <section>
         <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Termination</h2>
         <p className="mt-2">
-          You can stop using School AI and delete your account and all its data at any time from Settings → Account →
+          You can stop using Lyceum and delete your account and all its data at any time from Settings → Account →
           Delete account. The operator may suspend or terminate an account that violates the acceptable-use terms
           above, or discontinue the service, with notice where practical.
         </p>

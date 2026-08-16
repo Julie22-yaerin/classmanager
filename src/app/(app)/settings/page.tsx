@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut, deleteUser } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -9,6 +8,13 @@ import { useAuth } from "@/lib/authContext";
 import { getUserProfile, updateUserProfile } from "@/lib/firestore/profile";
 import { exportAllUserData, deleteAllUserData } from "@/lib/firestore/dataControls";
 import { deleteAllGroupContributions } from "@/lib/firestore/groupSignals";
+import { AI_STYLES, AI_STYLE_LABELS, AI_STYLE_DESCRIPTIONS, type AiStyle } from "@/lib/types";
+import {
+  canNotify,
+  isReminderEnabled,
+  requestNotificationPermission,
+  setReminderEnabled,
+} from "@/lib/notifications";
 import InstallAppSection from "@/components/InstallAppSection";
 import type { UserProfile } from "@/lib/firestore/types";
 
@@ -18,6 +24,9 @@ export default function SettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<Partial<UserProfile>>({});
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [learningStatus, setLearningStatus] = useState<string | null>(null);
+  const learningEditGeneration = useRef(0);
 
   const [analyticsConsent, setAnalyticsConsent] = useState<"accepted" | "declined" | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -25,17 +34,29 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false);
   const [accountError, setAccountError] = useState<string | null>(null);
 
+  const [remindersEnabled, setRemindersEnabled] = useState(false);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | "unsupported">("unsupported");
+
   useEffect(() => {
     if (!user) return;
     (async () => {
       setProfile((await getUserProfile(user.uid)) ?? {});
+      setProfileLoaded(true);
     })();
   }, [user]);
+
+  function setProfileField<K extends keyof UserProfile>(field: K, value: UserProfile[K]) {
+    setProfile((p) => ({ ...p, [field]: value }));
+    learningEditGeneration.current += 1;
+    setLearningStatus(null);
+  }
 
   useEffect(() => {
     (async () => {
       const stored = window.localStorage.getItem(ANALYTICS_CONSENT_KEY);
       if (stored === "accepted" || stored === "declined") setAnalyticsConsent(stored);
+      setRemindersEnabled(isReminderEnabled());
+      setNotifPermission(canNotify() ? Notification.permission : "unsupported");
     })();
   }, []);
 
@@ -54,6 +75,42 @@ export default function SettingsPage() {
     }
   }
 
+  async function saveLearningProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    const generation = learningEditGeneration.current;
+    setLearningStatus("Saving…");
+    try {
+      await updateUserProfile(user.uid, {
+        aiStyle: profile.aiStyle,
+        academicLevel: profile.academicLevel,
+        explanationStyle: profile.explanationStyle,
+        communicationStyle: profile.communicationStyle,
+        learningPreferences: profile.learningPreferences,
+        weaknesses: profile.weaknesses,
+      });
+      // Only report success if no field changed since this save started —
+      // otherwise a late response could mark a newer, unsaved edit as "Saved."
+      if (learningEditGeneration.current === generation) setLearningStatus("Saved.");
+    } catch {
+      if (learningEditGeneration.current === generation) setLearningStatus("Failed to save.");
+    }
+  }
+
+  async function toggleReminders(value: boolean) {
+    if (value) {
+      const permission = await requestNotificationPermission();
+      setNotifPermission(permission);
+      if (permission !== "granted") {
+        setRemindersEnabled(false);
+        setReminderEnabled(false);
+        return;
+      }
+    }
+    setReminderEnabled(value);
+    setRemindersEnabled(value);
+  }
+
   function chooseAnalyticsConsent(value: "accepted" | "declined") {
     window.localStorage.setItem(ANALYTICS_CONSENT_KEY, value);
     setAnalyticsConsent(value);
@@ -68,7 +125,7 @@ export default function SettingsPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `school-ai-data-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `lyceum-data-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
     } finally {
@@ -105,13 +162,110 @@ export default function SettingsPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
       <h1 className="text-xl font-semibold">Settings</h1>
       {user && <p className="mt-1 text-sm text-zinc-500">Signed in as {user.email}</p>}
-      <p className="mt-1 text-sm text-zinc-500">
-        Looking for how the AI adapts to you? That&apos;s in{" "}
-        <Link href="/profile" className="underline">
-          Profile
-        </Link>
-        .
-      </p>
+
+      <section className="mt-6 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="font-medium">How you learn</h2>
+        <p className="mt-0.5 text-xs text-zinc-500">Applies across every class so predictions and plans adapt to you.</p>
+        <form onSubmit={saveLearningProfile} className="mt-3 flex flex-col gap-3">
+          <fieldset disabled={!profileLoaded} className="flex flex-col gap-3 disabled:opacity-50">
+            <div className="flex flex-col gap-1 text-sm">
+              How should your AI work?
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {AI_STYLES.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    disabled={!profileLoaded}
+                    onClick={() => setProfileField("aiStyle", s as AiStyle)}
+                    className={`rounded-lg border px-3 py-2 text-left text-xs transition-colors ${
+                      profile.aiStyle === s
+                        ? "border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900"
+                        : "border-zinc-200 text-zinc-700 dark:border-zinc-800 dark:text-zinc-300"
+                    }`}
+                  >
+                    <div className="font-medium">{AI_STYLE_LABELS[s]}</div>
+                    <div className={profile.aiStyle === s ? "opacity-80" : "text-zinc-500"}>{AI_STYLE_DESCRIPTIONS[s]}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="flex flex-col gap-1 text-sm">
+              Academic level
+              <input
+                value={profile.academicLevel ?? ""}
+                onChange={(e) => setProfileField("academicLevel", e.target.value)}
+                placeholder="e.g. 10th grade, mid-tier in math, strong in writing"
+                className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              Preferred explanation style
+              <input
+                value={profile.explanationStyle ?? ""}
+                onChange={(e) => setProfileField("explanationStyle", e.target.value)}
+                placeholder="e.g. step-by-step with worked examples, visual analogies"
+                className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              Preferred communication style
+              <input
+                value={profile.communicationStyle ?? ""}
+                onChange={(e) => setProfileField("communicationStyle", e.target.value)}
+                placeholder="e.g. blunt and concise, encouraging tone"
+                className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              Learning preferences
+              <input
+                value={profile.learningPreferences ?? ""}
+                onChange={(e) => setProfileField("learningPreferences", e.target.value)}
+                placeholder="e.g. prefers practice problems over theory"
+                className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              Weaknesses / recurring mistakes
+              <textarea
+                value={profile.weaknesses ?? ""}
+                onChange={(e) => setProfileField("weaknesses", e.target.value)}
+                rows={3}
+                placeholder="e.g. mixes up sin/cos identities, forgets significant figures"
+                className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              />
+            </label>
+            <button type="submit" className="self-start rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-zinc-900">
+              Save
+            </button>
+          </fieldset>
+          {!profileLoaded && <span className="text-xs text-zinc-500">Loading…</span>}
+          {learningStatus && <span className="text-xs text-zinc-500">{learningStatus}</span>}
+        </form>
+      </section>
+
+      <section className="mt-6 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="font-medium">Deadline reminders</h2>
+        <label className="mt-3 flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={remindersEnabled}
+            onChange={(e) => toggleReminders(e.target.checked)}
+            disabled={notifPermission === "unsupported" || notifPermission === "denied"}
+            className="mt-0.5"
+          />
+          <span>
+            Notify me 3 days and 1 day before a deadline
+            <span className="mt-0.5 block text-xs text-zinc-500">
+              {notifPermission === "unsupported"
+                ? "Your browser doesn't support notifications."
+                : notifPermission === "denied"
+                  ? "Notifications are blocked for this site — allow them in your browser's site settings, then reload."
+                  : "Uses your browser's notification permission and only fires while you've had Lyceum open recently — it can't wake up when the app is fully closed. True background push would need server-side infrastructure Lyceum doesn't have yet."}
+            </span>
+          </span>
+        </label>
+      </section>
 
       <section className="mt-6 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="font-medium">Privacy &amp; data</h2>
