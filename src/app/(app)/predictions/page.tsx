@@ -3,78 +3,13 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/authContext";
 import { listPredictions, resolvePrediction } from "@/lib/firestore/predictions";
+import { computeAccuracy, computeCalibration } from "@/lib/predictionStats";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { EvidenceBadge } from "@/components/class/WeightBars";
-import type { PredictionDoc, PredictionStatus } from "@/lib/firestore/types";
+import PredictionRow, { SOURCE_LABEL } from "@/components/predictions/PredictionRow";
+import type { PredictionDoc, PredictionSource, PredictionStatus } from "@/lib/firestore/types";
 
-const SOURCE_LABEL: Record<PredictionDoc["source"], string> = {
-  examMode: "Exam Mode",
-  teacherSimulator: "Teacher Simulator",
-  patternFinder: "Pattern Finder",
-};
-
-const CONFIDENCE_LABEL = { high: "High confidence", medium: "Medium confidence", low: "Low confidence" } as const;
-
-const STATUS_LABEL: Record<Exclude<PredictionStatus, "pending">, string> = {
-  correct: "Correct",
-  partial: "Partially right",
-  incorrect: "Wrong",
-};
-
-const STATUS_STYLE: Record<Exclude<PredictionStatus, "pending">, string> = {
-  correct: "text-emerald-700 dark:text-emerald-400",
-  partial: "text-amber-700 dark:text-amber-400",
-  incorrect: "text-zinc-500 dark:text-zinc-400",
-};
-
-function computeAccuracy(predictions: PredictionDoc[]): { resolvedCount: number; accuracy: number | null } {
-  const resolved = predictions.filter((p) => p.status !== "pending");
-  if (resolved.length === 0) return { resolvedCount: 0, accuracy: null };
-  const score = resolved.reduce((sum, p) => sum + (p.status === "correct" ? 1 : p.status === "partial" ? 0.5 : 0), 0);
-  return { resolvedCount: resolved.length, accuracy: Math.round((score / resolved.length) * 100) };
-}
-
-function PredictionRow({ prediction, onResolve }: { prediction: PredictionDoc; onResolve: (id: string, status: Exclude<PredictionStatus, "pending">) => void }) {
-  return (
-    <li className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm text-zinc-900 dark:text-zinc-50">{prediction.claim}</p>
-          <p className="mt-0.5 text-xs text-zinc-500">
-            {prediction.className} · {SOURCE_LABEL[prediction.source]}
-          </p>
-        </div>
-        <div className="shrink-0">
-          <EvidenceBadge level={prediction.confidence} labels={CONFIDENCE_LABEL} />
-        </div>
-      </div>
-      {prediction.status === "pending" ? (
-        <div className="mt-2 flex gap-2">
-          <button
-            onClick={() => onResolve(prediction.id, "correct")}
-            className="rounded-md bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-          >
-            Correct
-          </button>
-          <button
-            onClick={() => onResolve(prediction.id, "partial")}
-            className="rounded-md bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-          >
-            Partially right
-          </button>
-          <button
-            onClick={() => onResolve(prediction.id, "incorrect")}
-            className="rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-          >
-            Wrong
-          </button>
-        </div>
-      ) : (
-        <p className={`mt-2 text-xs font-medium uppercase tracking-wide ${STATUS_STYLE[prediction.status]}`}>{STATUS_LABEL[prediction.status]}</p>
-      )}
-    </li>
-  );
-}
+const CONFIDENCE_LEVELS = ["high", "medium", "low"] as const;
+const SOURCES: PredictionSource[] = ["examMode", "teacherSimulator", "patternFinder"];
 
 export default function PredictionsPage() {
   const { user } = useAuth();
@@ -106,6 +41,7 @@ export default function PredictionsPage() {
   const pending = predictions.filter((p) => p.status === "pending");
   const resolved = predictions.filter((p) => p.status !== "pending");
   const { resolvedCount, accuracy } = computeAccuracy(predictions);
+  const { byConfidence, bySource } = computeCalibration(predictions);
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
@@ -126,6 +62,53 @@ export default function PredictionsPage() {
           </div>
         </div>
       </section>
+
+      {resolvedCount > 0 && (
+        <section className="mt-6 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="text-sm font-medium">Is high confidence actually more accurate?</h2>
+          <p className="mt-0.5 text-xs text-zinc-500">Accuracy by confidence level, across resolved predictions.</p>
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            {CONFIDENCE_LEVELS.map((level) => (
+              <div key={level} className="rounded-md bg-zinc-50 p-2.5 text-center dark:bg-zinc-950">
+                <p className="text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                  {byConfidence[level].accuracy === null ? "—" : `${byConfidence[level].accuracy}%`}
+                </p>
+                <p className="text-xs capitalize text-zinc-500">{level} ({byConfidence[level].resolvedCount})</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-left text-zinc-500">
+                  <th className="pb-1 pr-2 font-medium">Feature</th>
+                  {CONFIDENCE_LEVELS.map((level) => (
+                    <th key={level} className="pb-1 pr-2 text-right font-medium capitalize">
+                      {level}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {SOURCES.map((source) => (
+                  <tr key={source} className="border-t border-zinc-100 dark:border-zinc-800">
+                    <td className="py-1.5 pr-2 text-zinc-700 dark:text-zinc-300">{SOURCE_LABEL[source]}</td>
+                    {CONFIDENCE_LEVELS.map((level) => {
+                      const bucket = bySource[source][level];
+                      return (
+                        <td key={level} className="py-1.5 pr-2 text-right tabular-nums text-zinc-700 dark:text-zinc-300">
+                          {bucket.accuracy === null ? "—" : `${bucket.accuracy}% (${bucket.resolvedCount})`}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <section className="mt-6">
         <h2 className="text-sm font-medium text-zinc-500">Awaiting resolution ({pending.length})</h2>

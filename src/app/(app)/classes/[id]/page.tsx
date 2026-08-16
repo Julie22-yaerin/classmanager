@@ -17,6 +17,7 @@ import PatternFinderPanel from "@/components/class/PatternFinderPanel";
 import CurriculumGraphPanel from "@/components/class/CurriculumGraphPanel";
 import TeacherPlaybookPanel from "@/components/class/TeacherPlaybookPanel";
 import TeacherSimulatorPanel from "@/components/class/TeacherSimulatorPanel";
+import ClassPredictionsPanel from "@/components/class/ClassPredictionsPanel";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { listTeacherSimulations } from "@/lib/firestore/teacherSimulations";
 import type { ClassDoc, MaterialDoc, DeadlineDoc, ExamReportDoc, TeacherSimulationDoc, PatternReportDoc } from "@/lib/firestore/types";
@@ -107,6 +108,7 @@ export default function ClassDetailPage() {
           <TeacherSimulatorPanel cls={cls} initialSimulations={simulations} />
           <ExamModePanel cls={cls} initialReports={examReports} />
           <PatternFinderPanel cls={cls} initialReports={patternReports} hasPastExam={materials.some((m) => m.tag === "PastExam")} />
+          <ClassPredictionsPanel classId={cls.id} materials={materials} />
 
           <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="font-medium">Deadlines</h2>
