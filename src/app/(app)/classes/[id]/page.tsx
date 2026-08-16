@@ -100,7 +100,7 @@ export default function ClassDetailPage() {
           <TeacherPlaybookPanel cls={cls} onSaved={(playbook) => setCls((prev) => (prev ? { ...prev, playbook } : prev))} />
           <TeacherSimulatorPanel cls={cls} initialSimulations={simulations} />
           <ExamModePanel cls={cls} initialReports={examReports} />
-          <PatternFinderPanel cls={cls} initialReports={patternReports} />
+          <PatternFinderPanel cls={cls} initialReports={patternReports} hasPastExam={materials.some((m) => m.tag === "PastExam")} />
 
           <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="font-medium">Deadlines</h2>
