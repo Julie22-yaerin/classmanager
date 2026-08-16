@@ -7,6 +7,8 @@ import { toClassContext, toProfileContext } from "@/lib/mappers";
 import { listMaterialsForClass } from "@/lib/firestore/materials";
 import { listExamReports } from "@/lib/firestore/examReports";
 import { createTeacherSimulation, listTeacherSimulations } from "@/lib/firestore/teacherSimulations";
+import { recordPredictions } from "@/lib/firestore/predictions";
+import { extractFromTeacherSimulation } from "@/lib/predictionLedger";
 import { getUserProfile } from "@/lib/firestore/profile";
 import type { ClassDoc, TeacherSimulationDoc, MaterialDoc } from "@/lib/firestore/types";
 import type { TeacherSimulationOutput } from "@/lib/teacherSimulator";
@@ -165,6 +167,7 @@ export default function TeacherSimulatorPanel({ cls, initialSimulations }: { cls
         },
         createdAt: new Date().toISOString(),
       });
+      await recordPredictions(user.uid, extractFromTeacherSimulation(simulation, saved.id, cls.id, `${cls.subject} · ${cls.teacherName}`));
 
       const refreshed = await listTeacherSimulations(user.uid, cls.id);
       setSimulations(refreshed.length ? refreshed : [saved]);

@@ -7,6 +7,8 @@ import { toClassContext, toProfileContext, toMaterialSummary } from "@/lib/mappe
 import { listMaterialsForClass } from "@/lib/firestore/materials";
 import { createExamReport, listExamReports } from "@/lib/firestore/examReports";
 import { saveTopicPriorities } from "@/lib/firestore/classes";
+import { recordPredictions } from "@/lib/firestore/predictions";
+import { extractFromExamReport } from "@/lib/predictionLedger";
 import { getUserProfile } from "@/lib/firestore/profile";
 import type { ClassDoc, ExamReportDoc } from "@/lib/firestore/types";
 import type { ExamReportOutput } from "@/lib/examMode";
@@ -103,6 +105,7 @@ export default function ExamModePanel({ cls, initialReports }: { cls: ClassDoc; 
         createdAt: new Date().toISOString(),
       });
       if (report.topic_priority.length) await saveTopicPriorities(user.uid, cls, report.topic_priority);
+      await recordPredictions(user.uid, extractFromExamReport(report, saved.id, cls.id, `${cls.subject} · ${cls.teacherName}`));
 
       const refreshed = await listExamReports(user.uid, cls.id);
       setReports(refreshed.length ? refreshed : [saved]);

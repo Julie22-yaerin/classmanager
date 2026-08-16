@@ -60,6 +60,10 @@ service cloud.firestore {
       match /patternReports/{reportId} {
         allow read, write: if isOwner(uid) && withinSize('summary', 5000) && withinSize('strategicImplication', 5000) && withinSize('caveat', 2000);
       }
+
+      match /predictions/{predictionId} {
+        allow read, write: if isOwner(uid) && withinSize('claim', 2000) && withinSize('resolutionNote', 2000);
+      }
     }
   }
 }
