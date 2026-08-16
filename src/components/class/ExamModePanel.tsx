@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/authContext";
 import { callApi } from "@/lib/apiClient";
-import { toClassContext, toProfileContext } from "@/lib/mappers";
+import { toClassContext, toProfileContext, toMaterialSummary } from "@/lib/mappers";
 import { listMaterialsForClass } from "@/lib/firestore/materials";
 import { createExamReport, listExamReports } from "@/lib/firestore/examReports";
 import { saveTopicPriorities } from "@/lib/firestore/classes";
 import { getUserProfile } from "@/lib/firestore/profile";
-import type { ClassDoc, ExamReportDoc, MaterialDoc } from "@/lib/firestore/types";
-import type { ExamReportOutput, MaterialSummary } from "@/lib/examMode";
+import type { ClassDoc, ExamReportDoc } from "@/lib/firestore/types";
+import type { ExamReportOutput } from "@/lib/examMode";
 import { TopicPriorityBars, MarkDistributionBars, EvidenceBadge } from "@/components/class/WeightBars";
 
 interface ParsedTopic {
@@ -17,15 +17,6 @@ interface ParsedTopic {
   weight?: number;
   reason?: string;
   evidence?: string | string[];
-}
-
-function toMaterialSummary(m: MaterialDoc): MaterialSummary {
-  return {
-    tag: m.tag,
-    topic: m.topic,
-    excerpt: m.rawContent || m.extractedText || m.fileName || "",
-    analysis: m.analysis ? JSON.stringify(m.analysis) : null,
-  };
 }
 
 function ReportView({ report }: { report: ExamReportDoc }) {
