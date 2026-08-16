@@ -17,12 +17,15 @@ import { listMessages, createMessage } from "@/lib/firestore/messages";
 import { createMaterial } from "@/lib/firestore/materials";
 import { createDeadlines } from "@/lib/firestore/deadlines";
 import { applyMemoryUpdate, appendImportantDates } from "@/lib/firestore/classes";
+import { recordEvidenceSignals, recomputeTopicState } from "@/lib/firestore/evidenceSignals";
+import { recordReferenceItems } from "@/lib/firestore/referenceItems";
+import { clamp01 } from "@/lib/evidenceEngine";
 import { callApi } from "@/lib/apiClient";
 import { toClassContext, toProfileContext } from "@/lib/mappers";
 import type { ClassDoc, MessageDoc, UserProfile } from "@/lib/firestore/types";
 import type { RunChatResult } from "@/lib/aiChat";
 import type { RoutableClass, ClassRouterResult } from "@/lib/classRouter";
-import type { Tag, Mode, HomeworkMode } from "@/lib/types";
+import { slugifyTopic, type Tag, type Mode, type HomeworkMode } from "@/lib/types";
 
 interface PendingSend {
   tag: Tag;
@@ -174,6 +177,58 @@ export default function ChatPage() {
             cls,
             result.deadlines.map((d) => ({ title: d.title, date: d.due_date, source: sourceType })),
           );
+        }
+
+        if (result.evidence_signals?.length) {
+          // Evidence scoring is auxiliary to the chat reply — if it fails (a
+          // rules rejection, a size-limit violation, an offline client), the
+          // student should still get the reply the model already produced,
+          // not lose it because a background scoring write rejected.
+          try {
+            const evidenceNow = new Date().toISOString();
+            await recordEvidenceSignals(
+              user.uid,
+              result.evidence_signals.map((s) => ({
+                classId,
+                topicId: slugifyTopic(s.topic),
+                topicLabel: s.topic,
+                signalType: s.signal_type,
+                rawEvidence: s.raw_evidence,
+                normalizedEvidence: s.normalized_evidence,
+                strength: clamp01(s.strength),
+                specificity: clamp01(s.specificity),
+                extractionConfidence: clamp01(s.extraction_confidence),
+                sourceType: "chat",
+                materialId,
+                createdAt: evidenceNow,
+              })),
+            );
+            const touchedTopics = new Map(result.evidence_signals.map((s) => [slugifyTopic(s.topic), s.topic]));
+            await Promise.all([...touchedTopics].map(([topicId, topicLabel]) => recomputeTopicState(user.uid, classId, topicId, topicLabel)));
+          } catch (evidenceErr) {
+            console.error("evidence signal persistence failed", evidenceErr);
+          }
+        }
+
+        if (result.reference_suggestions?.length) {
+          try {
+            const referenceNow = new Date().toISOString();
+            await recordReferenceItems(
+              user.uid,
+              result.reference_suggestions.slice(0, 3).map((r) => ({
+                classId,
+                className: `${cls.subject} · ${cls.teacherName}`,
+                topic: r.topic,
+                title: r.title,
+                resourceType: r.resource_type,
+                description: r.description,
+                searchQuery: r.search_query,
+                createdAt: referenceNow,
+              })),
+            );
+          } catch (referenceErr) {
+            console.error("reference item persistence failed", referenceErr);
+          }
         }
       }
 

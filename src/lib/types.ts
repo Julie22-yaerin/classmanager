@@ -1,4 +1,4 @@
-export const TAGS = ["Homework", "PastExam", "ClassRecording", "Material", "Notes", "Announcement"] as const;
+export const TAGS = ["Homework", "PastExam", "ClassRecording", "Material", "Notes", "Announcement", "Reference"] as const;
 
 export type Tag = (typeof TAGS)[number];
 
@@ -9,6 +9,7 @@ export const TAG_LABELS: Record<Tag, string> = {
   Material: "Material",
   Notes: "Notes",
   Announcement: "Announcement",
+  Reference: "Find a Resource",
 };
 
 export const TAG_DESCRIPTIONS: Record<Tag, string> = {
@@ -18,6 +19,7 @@ export const TAG_DESCRIPTIONS: Record<Tag, string> = {
   Material: "Index a handout, slide, or reading and file it into class knowledge.",
   Notes: "Save personal notes into class knowledge.",
   Announcement: "Extract a task/date/deadline and create a reminder.",
+  Reference: "Ask for study resources on a topic — saved to the Reference Room.",
 };
 
 export function isTag(value: unknown): value is Tag {
@@ -48,6 +50,45 @@ export function isHomeworkMode(value: unknown): value is HomeworkMode {
 }
 
 export type SourceType = "text" | "image" | "pdf" | "audio";
+
+// Evidence Signal taxonomy for the deterministic prediction engine (see
+// src/lib/evidenceEngine.ts). The LLM only ever extracts these — raw,
+// typed observations — never a priority judgment; every score derived
+// from them is computed in code, not asked of the model.
+export const SIGNAL_TYPES = [
+  "TEACHER_EMPHASIS",
+  "TEACHER_REPETITION",
+  "TEACHER_WARNING",
+  "TEACHER_REVIEW",
+  "HOMEWORK_ASSIGNMENT",
+  "HOMEWORK_DIFFICULTY",
+  "EXAM_HISTORY",
+  "QUESTION_PATTERN",
+  "TOPIC_RECURRENCE",
+  "SYLLABUS_POSITION",
+  "CURRICULUM_CENTRALITY",
+  "SLIDE_EMPHASIS",
+  "LECTURE_COVERAGE",
+  "DEADLINE_PROXIMITY",
+  "ASSESSMENT_ANNOUNCEMENT",
+  "STUDENT_PERFORMANCE",
+  "OTHER",
+] as const;
+export type SignalType = (typeof SIGNAL_TYPES)[number];
+
+export const RESOURCE_TYPES = ["video", "article", "practice", "textbook", "other"] as const;
+export type ResourceType = (typeof RESOURCE_TYPES)[number];
+
+export function slugifyTopic(label: string): string {
+  const slug = label
+    .normalize("NFKD")
+    .trim()
+    .toLowerCase()
+    .replace(/\p{M}/gu, "") // strip combining accent marks (é → e), but keep non-Latin letters (中文, العربية) distinct
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || "topic";
+}
 
 export interface TopicPriorityItem {
   topic: string;

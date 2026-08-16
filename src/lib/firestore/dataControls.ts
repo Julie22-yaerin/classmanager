@@ -12,6 +12,10 @@ const SUBCOLLECTIONS = [
   "classUpdates",
   "patternReports",
   "predictions",
+  "evidenceSignals",
+  "topicStates",
+  "topicGenerations",
+  "referenceItems",
   "groupContributionRefs",
 ] as const;
 

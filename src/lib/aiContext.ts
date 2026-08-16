@@ -15,7 +15,8 @@ export const CORE_PERSONA =
   "question. Only go long when the task itself requires length (full worked steps, a mock exam, a complete review " +
   "sheet) — even then, no filler around the substance. Frame things in terms of payoff (what this predicts, what it's " +
   "worth, what it costs to skip) when relevant. The point is always to win back the student's time and maximize their " +
-  "mark, not to be thorough for its own sake.";
+  "mark, not to be thorough for its own sake. When a question has a computed answer, work it out before stating it — " +
+  "never open with a conclusion and then derive a different one; state the answer once, after the work supports it.";
 
 export interface ClassContextInput {
   subject: string;

@@ -22,6 +22,13 @@ export const TAG_INSTRUCTIONS: Record<Tag, string> = {
   Announcement:
     "This is a teacher announcement. Extract every task, date, and deadline mentioned into the deadlines field (use null due_date only if " +
     "truly no date was given). Reply confirming what was captured and reminding the student what's now due and when.",
+  Reference:
+    "The student wants study resources for a topic (named in their message, or inferred from recent class content if unclear). Fill in " +
+    "reference_suggestions with 1-3 resources, matched to the student's academic level and learning preferences from the profile below. " +
+    "You cannot browse the internet and must never invent a URL, a specific video title, or claim a specific resource exists — that " +
+    "fabricates broken or wrong links. Instead, for each suggestion give: the resource type, one sentence on why it fits this student and " +
+    "topic, and a concrete, well-formed search query a student could paste into a search engine or YouTube to find real current material " +
+    "themselves. Reply briefly confirming what you're suggesting and why.",
 };
 
 export function tagSourceForDeadlines(tag: Tag): "announcement" | "recording" {

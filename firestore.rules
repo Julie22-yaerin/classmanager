@@ -65,6 +65,35 @@ service cloud.firestore {
         allow read, write: if isOwner(uid) && withinSize('claim', 2000) && withinSize('resolutionNote', 2000);
       }
 
+      // Evidence-scoring engine: raw typed observations (evidenceSignals) and
+      // the deterministic scores computed from them per topic (topicStates).
+      match /evidenceSignals/{signalId} {
+        allow read, write: if isOwner(uid) &&
+          withinSize('rawEvidence', 2000) &&
+          withinSize('normalizedEvidence', 500) &&
+          withinSize('topicLabel', 200);
+      }
+
+      match /topicStates/{topicStateId} {
+        allow read, write: if isOwner(uid) && withinSize('topicLabel', 200);
+      }
+
+      // Per-topic generation counter used to order concurrent topicState
+      // recomputes (see claimNextGeneration in evidenceSignals.ts) — no
+      // free-text fields, so no withinSize checks needed.
+      match /topicGenerations/{topicGenerationId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Reference Room: AI-suggested study resources, filed by class/topic/time.
+      match /referenceItems/{referenceItemId} {
+        allow read, write: if isOwner(uid) &&
+          withinSize('title', 300) &&
+          withinSize('description', 1000) &&
+          withinSize('searchQuery', 500) &&
+          withinSize('topic', 200);
+      }
+
       // Private markers of which shared groupSignals/{fingerprint} docs this
       // user has contributed to, so account deletion can clean those up too.
       match /groupContributionRefs/{fingerprint} {

@@ -15,6 +15,7 @@ const LINKS = [
 // the chat home screen as widgets, so these are just the "see everything" links.
 const SECONDARY_LINKS = [
   { href: "/deadlines", label: "Deadlines" },
+  { href: "/references", label: "Reference Room" },
   { href: "/predictions", label: "Predictions" },
 ];
 
