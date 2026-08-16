@@ -211,11 +211,11 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-xs text-zinc-400">
           <a href="/privacy" className="underline">
-            Privacy Policy
+            Chính sách quyền riêng tư
           </a>{" "}
           ·{" "}
           <a href="/terms" className="underline">
-            Terms of Service
+            Điều khoản dịch vụ
           </a>
         </p>
       </div>

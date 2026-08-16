@@ -56,7 +56,6 @@ export default function Sidebar() {
         <button onClick={handleSignOut} className="self-start text-xs text-zinc-400 hover:text-zinc-700 hover:underline dark:text-zinc-500 dark:hover:text-zinc-300">
           Sign out
         </button>
-        <div className="text-[11px] text-zinc-300 dark:text-zinc-700">DRM v0.3 — School AI</div>
       </div>
     </aside>
   );

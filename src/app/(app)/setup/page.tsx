@@ -226,11 +226,14 @@ export default function SetupPage() {
                     </button>
                   </span>
                 ) : (
-                  <span className="flex shrink-0 gap-1.5 opacity-0 group-hover:opacity-100">
-                    <button onClick={() => startEditClass(c)} className="text-xs text-zinc-500 hover:underline">
+                  <span className="flex shrink-0 gap-1.5">
+                    <button onClick={() => startEditClass(c)} className="text-xs text-zinc-400 hover:text-zinc-700 hover:underline dark:text-zinc-500 dark:hover:text-zinc-200">
                       Edit
                     </button>
-                    <button onClick={() => setConfirmDeleteClassId(c.id)} className="text-xs text-red-600 hover:underline dark:text-red-400">
+                    <button
+                      onClick={() => setConfirmDeleteClassId(c.id)}
+                      className="text-xs text-red-500/70 hover:text-red-600 hover:underline dark:text-red-400/70 dark:hover:text-red-400"
+                    >
                       Delete
                     </button>
                   </span>
