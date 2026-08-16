@@ -1,10 +1,14 @@
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { MaterialDoc } from "@/lib/firestore/types";
+import type { ClassTimeline, MaterialDoc } from "@/lib/firestore/types";
 import type { Tag } from "@/lib/types";
 
 function materialsRef(uid: string) {
   return collection(db, "users", uid, "materials");
+}
+
+function materialRef(uid: string, materialId: string) {
+  return doc(db, "users", uid, "materials", materialId);
 }
 
 function byCreatedAtDesc(a: MaterialDoc, b: MaterialDoc) {
@@ -29,4 +33,8 @@ export async function listRecentMaterialsByTag(uid: string, tag: Tag, take = 15)
 export async function createMaterial(uid: string, data: Omit<MaterialDoc, "id">): Promise<MaterialDoc> {
   const ref = await addDoc(materialsRef(uid), data);
   return { id: ref.id, ...data };
+}
+
+export async function saveMaterialTimeline(uid: string, materialId: string, timeline: ClassTimeline): Promise<void> {
+  await updateDoc(materialRef(uid, materialId), { timeline });
 }

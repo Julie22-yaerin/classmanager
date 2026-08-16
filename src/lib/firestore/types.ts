@@ -89,6 +89,20 @@ export interface ClassDoc {
   updatedAt: string;
 }
 
+export interface TimelineBlock {
+  label: string;
+  topic: string;
+  summary: string;
+}
+
+export interface ClassTimeline {
+  evidenceStrength: "high" | "medium" | "low";
+  hasTimestamps: boolean;
+  blocks: TimelineBlock[];
+  caveat: string;
+  generatedAt: string;
+}
+
 export interface MaterialDoc {
   id: string;
   classId: string;
@@ -101,6 +115,7 @@ export interface MaterialDoc {
   analysis: Record<string, unknown> | null;
   fileName: string | null;
   mimeType: string | null;
+  timeline: ClassTimeline | null;
   createdAt: string;
 }
 
