@@ -43,6 +43,7 @@ export default function ReferencesPage() {
   const { user } = useAuth();
   const [items, setItems] = useState<ReferenceItemDoc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [classFilter, setClassFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<ResourceType | "all">("all");
 
@@ -54,6 +55,11 @@ export default function ReferencesPage() {
         const result = await listReferenceItems(user.uid);
         if (!active) return;
         setItems(result);
+        setError(null);
+      } catch (err) {
+        if (!active) return;
+        console.error("failed to load reference items", err);
+        setError("Couldn't load the Reference Room. Try refreshing.");
       } finally {
         if (active) setLoading(false);
       }
@@ -70,6 +76,14 @@ export default function ReferencesPage() {
     return (
       <div className="flex h-full items-center justify-center">
         <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center px-4 text-center text-sm text-zinc-500">
+        {error}
       </div>
     );
   }

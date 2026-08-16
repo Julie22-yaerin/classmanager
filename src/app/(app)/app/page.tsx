@@ -215,7 +215,7 @@ export default function ChatPage() {
             const referenceNow = new Date().toISOString();
             await recordReferenceItems(
               user.uid,
-              result.reference_suggestions.map((r) => ({
+              result.reference_suggestions.slice(0, 3).map((r) => ({
                 classId,
                 className: `${cls.subject} · ${cls.teacherName}`,
                 topic: r.topic,

@@ -112,6 +112,8 @@ export const RESPOND_TOOL: OpenAI.Chat.Completions.ChatCompletionFunctionTool = 
             "Only when the student is asking to find a study resource (Reference tag): 1-3 suggested resources. You cannot browse the " +
             "internet — never invent a URL or claim a specific video/article exists. Give a search query instead, so the student finds a " +
             "real, current resource themselves. Omit entirely (null) otherwise.",
+          minItems: 1,
+          maxItems: 3,
           items: {
             type: "object",
             properties: {
