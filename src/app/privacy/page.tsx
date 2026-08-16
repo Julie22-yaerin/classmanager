@@ -90,9 +90,21 @@ export default function PrivacyPage() {
         <p className="mt-2">
           Everything above is stored in Google Firestore, scoped to your account — Firestore&apos;s security rules
           prevent any other user, and this app&apos;s own server, from reading or writing your data directly; access is
-          only ever your signed-in browser acting on your own account. Data is transmitted over encrypted (HTTPS/TLS)
-          connections end to end — from your browser to Firebase/Firestore, to our servers, and to the AI providers
-          below.
+          only ever your signed-in browser acting on your own account. The one exception is Group Intelligence, an
+          opt-in feature described below. Data is transmitted over encrypted (HTTPS/TLS) connections end to end — from
+          your browser to Firebase/Firestore, to our servers, and to the AI providers below.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Group Intelligence (optional)</h2>
+        <p className="mt-2">
+          Off by default. If you turn it on (Settings → Privacy &amp; data), each topic name and its priority weight
+          (a number 1–5) from your class memory is written to a shared record other opted-in students can read — never
+          your reasons, evidence, materials, messages, or any other class content. Classes are matched across accounts
+          by normalized teacher name, subject, and grade, which is approximate and not verified to be the literal same
+          class. Turning the toggle off stops new sharing; deleting your account also deletes everything you&apos;ve
+          previously contributed to every shared record.
         </p>
       </section>
 
@@ -140,7 +152,10 @@ export default function PrivacyPage() {
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>We don&apos;t sell your data.</li>
           <li>We don&apos;t show ads.</li>
-          <li>We don&apos;t share your class content with other users — every account&apos;s data is isolated.</li>
+          <li>
+            We don&apos;t share your class content with other users — every account&apos;s data is isolated, except for
+            the topic names and priority weights you explicitly opt to share via Group Intelligence.
+          </li>
         </ul>
       </section>
 
