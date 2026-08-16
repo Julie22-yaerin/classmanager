@@ -11,6 +11,13 @@ const LINKS = [
   { href: "/setup", label: "Classes" },
 ];
 
+// Kept reachable but visually secondary: their content now lives directly on
+// the chat home screen as widgets, so these are just the "see everything" links.
+const SECONDARY_LINKS = [
+  { href: "/deadlines", label: "Deadlines" },
+  { href: "/predictions", label: "Predictions" },
+];
+
 function UserAvatar({ email }: { email: string }) {
   const initial = email.trim().charAt(0).toUpperCase() || "?";
   return (
@@ -41,6 +48,24 @@ export default function Sidebar() {
                 active
                   ? "bg-amber-100/60 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
                   : "text-zinc-500 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+              }`}
+            >
+              {link.label}
+            </Link>
+          );
+        })}
+      </nav>
+      <nav className="mt-2 flex flex-col gap-0.5 px-2">
+        {SECONDARY_LINKS.map((link) => {
+          const active = pathname.startsWith(link.href);
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`rounded-lg px-3 py-1.5 text-xs transition-colors ${
+                active
+                  ? "bg-amber-100/60 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                  : "text-zinc-400 hover:bg-zinc-200/60 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-300"
               }`}
             >
               {link.label}

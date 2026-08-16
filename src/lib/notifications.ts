@@ -2,6 +2,7 @@ import type { DeadlineDoc } from "@/lib/firestore/types";
 
 const NOTIFIED_KEY = "lyceum_notified_deadlines";
 const ENABLED_KEY = "lyceum_deadline_reminders_enabled";
+export const REMINDERS_CHANGED_EVENT = "lyceum:reminders-changed";
 
 type NotifiedMap = Record<string, true>;
 
@@ -15,6 +16,7 @@ export function isReminderEnabled(): boolean {
 
 export function setReminderEnabled(value: boolean): void {
   window.localStorage.setItem(ENABLED_KEY, value ? "1" : "0");
+  window.dispatchEvent(new Event(REMINDERS_CHANGED_EVENT));
 }
 
 export async function requestNotificationPermission(): Promise<NotificationPermission> {

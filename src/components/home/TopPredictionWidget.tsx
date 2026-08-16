@@ -28,11 +28,16 @@ export default function TopPredictionWidget() {
 
   useEffect(() => {
     if (!user) return;
+    let active = true;
     (async () => {
       const predictions = await listPredictions(user.uid);
+      if (!active) return;
       setTop(topPending(predictions));
       setLoading(false);
     })();
+    return () => {
+      active = false;
+    };
   }, [user]);
 
   return (

@@ -14,10 +14,16 @@ export default function DeadlineCalendarWidget() {
 
   useEffect(() => {
     if (!user) return;
+    let active = true;
     (async () => {
-      setDeadlines(await listDeadlines(user.uid));
+      const result = await listDeadlines(user.uid);
+      if (!active) return;
+      setDeadlines(result);
       setLoading(false);
     })();
+    return () => {
+      active = false;
+    };
   }, [user]);
 
   return (
