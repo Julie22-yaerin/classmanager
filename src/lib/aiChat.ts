@@ -61,8 +61,11 @@ export async function runChatCompletion(input: RunChatInput): Promise<RunChatRes
     instructionParts.push(`Homework mode selected: ${HOMEWORK_MODE_INSTRUCTIONS[input.homeworkMode]}`);
   }
 
+  const todayLine = `Today's date: ${new Date().toLocaleDateString("en-CA", { weekday: "long", year: "numeric", month: "2-digit", day: "2-digit", timeZone: "UTC" })} (YYYY-MM-DD, UTC). Resolve any relative date the student or a teacher announcement gives ("next Friday", "in two weeks", "tomorrow") against this, not a guess.`;
+
   const systemPrompt = [
     CORE_PERSONA,
+    todayLine,
     "Ground every reply in the class memory and student profile below — that's what makes this feel like it actually knows this student's teachers and classes, not a generic answer.",
     MODE_FRAMING[input.mode],
     ...instructionParts,
