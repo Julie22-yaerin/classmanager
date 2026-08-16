@@ -133,8 +133,12 @@ export interface PatternReportDoc {
     title: string;
     description: string;
     sourceTag: string;
+    sourceMaterialId: string | null;
     sourceExcerpt: string;
+    matchedMaterialId: string | null;
     matchedExcerpt: string;
+    occurrenceCount: number;
+    prepAction: string;
     confidence: "high" | "medium" | "low";
   }[];
   summary: string;
