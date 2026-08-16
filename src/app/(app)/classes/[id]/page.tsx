@@ -24,6 +24,9 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { listTeacherSimulations } from "@/lib/firestore/teacherSimulations";
 import type { ClassDoc, MaterialDoc, DeadlineDoc, ExamReportDoc, TeacherSimulationDoc, PatternReportDoc } from "@/lib/firestore/types";
 
+const TABS = ["Overview", "Predict & prep", "Curriculum map", "Teacher & peers"] as const;
+type Tab = (typeof TABS)[number];
+
 export default function ClassDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -35,6 +38,7 @@ export default function ClassDetailPage() {
   const [simulations, setSimulations] = useState<TeacherSimulationDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [tab, setTab] = useState<Tab>("Overview");
 
   useEffect(() => {
     if (!user || !id) return;
@@ -95,25 +99,26 @@ export default function ClassDetailPage() {
         <WhatChangedPanel classId={cls.id} />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="flex flex-col gap-6">
+      <div className="mt-6 flex flex-wrap gap-1 border-b border-zinc-200 dark:border-zinc-800">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`-mb-px rounded-t-md border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+              tab === t
+                ? "border-zinc-900 text-zinc-900 dark:border-white dark:text-white"
+                : "border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {tab === "Overview" && (
+        <div className="mt-6 flex flex-col gap-6">
           <ClassMemoryPanel cls={cls} />
           <MaterialsList materials={materials} />
-          <ClassTimelinePanel cls={cls} materials={materials} />
-        </div>
-        <div className="flex flex-col gap-6">
-          <TeacherPlaybookPanel cls={cls} onSaved={(playbook) => setCls((prev) => (prev ? { ...prev, playbook } : prev))} />
-          <CurriculumGraphPanel
-            cls={cls}
-            onSaved={(curriculumGraph) => setCls((prev) => (prev ? { ...prev, curriculumGraph } : prev))}
-            hasSignal={materials.length > 0 || !!cls.curriculum || cls.topicPriorities.length > 0}
-          />
-          <TeacherSimulatorPanel cls={cls} initialSimulations={simulations} />
-          <ExamModePanel cls={cls} initialReports={examReports} />
-          <PatternFinderPanel cls={cls} initialReports={patternReports} hasPastExam={materials.some((m) => m.tag === "PastExam")} />
-          <ClassPredictionsPanel classId={cls.id} materials={materials} />
-          <GroupIntelligencePanel cls={cls} />
-
           <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="font-medium">Deadlines</h2>
             <ul className="mt-3 flex flex-col gap-1.5 text-sm">
@@ -127,7 +132,38 @@ export default function ClassDetailPage() {
             </ul>
           </section>
         </div>
-      </div>
+      )}
+
+      {tab === "Predict & prep" && (
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <div className="flex flex-col gap-6">
+            <TeacherSimulatorPanel cls={cls} initialSimulations={simulations} />
+            <ExamModePanel cls={cls} initialReports={examReports} />
+          </div>
+          <div className="flex flex-col gap-6">
+            <PatternFinderPanel cls={cls} initialReports={patternReports} hasPastExam={materials.some((m) => m.tag === "PastExam")} />
+            <ClassPredictionsPanel classId={cls.id} materials={materials} />
+          </div>
+        </div>
+      )}
+
+      {tab === "Curriculum map" && (
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <CurriculumGraphPanel
+            cls={cls}
+            onSaved={(curriculumGraph) => setCls((prev) => (prev ? { ...prev, curriculumGraph } : prev))}
+            hasSignal={materials.length > 0 || !!cls.curriculum || cls.topicPriorities.length > 0}
+          />
+          <ClassTimelinePanel cls={cls} materials={materials} />
+        </div>
+      )}
+
+      {tab === "Teacher & peers" && (
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <TeacherPlaybookPanel cls={cls} onSaved={(playbook) => setCls((prev) => (prev ? { ...prev, playbook } : prev))} />
+          <GroupIntelligencePanel cls={cls} />
+        </div>
+      )}
     </main>
   );
 }
