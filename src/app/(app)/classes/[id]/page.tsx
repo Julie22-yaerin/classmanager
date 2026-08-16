@@ -14,6 +14,7 @@ import WhatChangedPanel from "@/components/class/WhatChangedPanel";
 import MaterialsList from "@/components/class/MaterialsList";
 import ExamModePanel from "@/components/class/ExamModePanel";
 import PatternFinderPanel from "@/components/class/PatternFinderPanel";
+import CurriculumGraphPanel from "@/components/class/CurriculumGraphPanel";
 import TeacherPlaybookPanel from "@/components/class/TeacherPlaybookPanel";
 import TeacherSimulatorPanel from "@/components/class/TeacherSimulatorPanel";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -98,6 +99,11 @@ export default function ClassDetailPage() {
         </div>
         <div className="flex flex-col gap-6">
           <TeacherPlaybookPanel cls={cls} onSaved={(playbook) => setCls((prev) => (prev ? { ...prev, playbook } : prev))} />
+          <CurriculumGraphPanel
+            cls={cls}
+            onSaved={(curriculumGraph) => setCls((prev) => (prev ? { ...prev, curriculumGraph } : prev))}
+            hasSignal={materials.length > 0 || !!cls.curriculum || cls.topicPriorities.length > 0}
+          />
           <TeacherSimulatorPanel cls={cls} initialSimulations={simulations} />
           <ExamModePanel cls={cls} initialReports={examReports} />
           <PatternFinderPanel cls={cls} initialReports={patternReports} hasPastExam={materials.some((m) => m.tag === "PastExam")} />
