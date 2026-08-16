@@ -54,21 +54,28 @@ export async function listTopicStates(uid: string, classId: string): Promise<Top
  * can't contain a `where`-query read), so two concurrent recomputes for the
  * same topic (e.g. two tabs replying at once) can each read a snapshot and
  * race to write. The transaction below guards the write itself using each
- * computation's newest-signal timestamp as the ordering key — NOT evidenceIds
- * containment: the read above is capped to the MAX_SIGNALS_PER_TOPIC most
- * recent signals, a sliding window, so a later computation is not guaranteed
- * to be a superset of an earlier one (older ids can fall out of the window
- * while the newer computation is still in flight). Comparing the newest
- * signal each computation actually saw is well-defined regardless of the
- * cap: it reads whatever is currently stored and skips the write if that
- * stored state was computed from a signal at least as new as this
- * computation's newest, so an in-flight older computation can't clobber a
- * newer one that already landed.
+ * computation's (newestSignalAt, signal count) as a composite ordering key —
+ * NOT evidenceIds containment: the read above is capped to the
+ * MAX_SIGNALS_PER_TOPIC most recent signals, a sliding window, so a later
+ * computation is not guaranteed to be a superset of an earlier one (older ids
+ * can fall out of the window while the newer computation is still in
+ * flight). newestSignalAt alone isn't enough either: every signal recorded
+ * from the same chat turn shares one batch timestamp (see `evidenceNow` in
+ * app/page.tsx), so two concurrent turns for the same topic can tie on it
+ * while covering different signals. Breaking that tie by signal count is
+ * sound because evidence is append-only: whichever computation's read landed
+ * after both turns' writes committed necessarily saw a strictly larger set,
+ * so a higher count is never a regression. (An exact tie on both
+ * newestSignalAt *and* count from genuinely disjoint concurrent turns would
+ * require two independent chat completions to land the same number of new
+ * signals on the same topic within the same millisecond — accepted as an
+ * unreachable-in-practice edge case for this P0 slice.)
  */
 export async function recomputeTopicState(uid: string, classId: string, topicId: string, topicLabel: string): Promise<void> {
   const signals = await listEvidenceSignalsForTopic(uid, classId, topicId);
   if (signals.length === 0) return;
   const computed = computeTopicState(signals);
+  const evidenceIds = signals.map((s) => s.id);
   // signals is sorted newest-first by listEvidenceSignalsForTopic.
   const newestSignalAt = signals[0].createdAt;
   const data: Omit<TopicStateDoc, "id"> = {
@@ -76,7 +83,7 @@ export async function recomputeTopicState(uid: string, classId: string, topicId:
     topicId,
     topicLabel,
     ...computed,
-    evidenceIds: signals.map((s) => s.id),
+    evidenceIds,
     lastComputedAt: new Date().toISOString(),
     newestSignalAt,
   };
@@ -84,8 +91,13 @@ export async function recomputeTopicState(uid: string, classId: string, topicId:
   await runTransaction(db, async (tx) => {
     const existing = await tx.get(ref);
     if (existing.exists()) {
-      const existingNewestSignalAt = (existing.data() as TopicStateDoc).newestSignalAt;
-      if (existingNewestSignalAt && existingNewestSignalAt >= newestSignalAt) return;
+      const existingData = existing.data() as TopicStateDoc;
+      const existingNewestSignalAt = existingData.newestSignalAt;
+      const existingCount = existingData.evidenceIds?.length ?? 0;
+      const isStale =
+        !!existingNewestSignalAt &&
+        (existingNewestSignalAt > newestSignalAt || (existingNewestSignalAt === newestSignalAt && existingCount >= evidenceIds.length));
+      if (isStale) return;
     }
     tx.set(ref, data);
   });
