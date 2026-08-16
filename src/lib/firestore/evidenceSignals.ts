@@ -15,6 +15,17 @@ function topicStateDocId(classId: string, topicId: string) {
   return `${classId}__${topicId}`;
 }
 
+// Caps how many of a topic's most recent signals feed the recompute — bounds
+// both the write (evidenceIds sits well under Firestore's 1MiB doc limit)
+// and the arithmetic cost. Recency-decays to near zero anyway past a few
+// half-lives, so dropping older signals barely moves the scores. This still
+// reads every signal for the topic before sorting/slicing client-side rather
+// than an indexed, limited query — this app deliberately has no
+// firestore.indexes.json/index-deployment step, so every query here sorts
+// client-side instead of relying on a composite index that isn't provisioned.
+// Bounding the *read* itself would need that index; left as a P1 item.
+const MAX_SIGNALS_PER_TOPIC = 200;
+
 export async function recordEvidenceSignals(uid: string, signals: Omit<EvidenceSignalDoc, "id">[]): Promise<void> {
   if (signals.length === 0) return;
   await Promise.all(signals.map((s) => addDoc(evidenceSignalsRef(uid), s)));
@@ -22,7 +33,10 @@ export async function recordEvidenceSignals(uid: string, signals: Omit<EvidenceS
 
 export async function listEvidenceSignalsForTopic(uid: string, classId: string, topicId: string): Promise<EvidenceSignalDoc[]> {
   const snap = await getDocs(query(evidenceSignalsRef(uid), where("classId", "==", classId), where("topicId", "==", topicId)));
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<EvidenceSignalDoc, "id">) }));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...(d.data() as Omit<EvidenceSignalDoc, "id">) }))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, MAX_SIGNALS_PER_TOPIC);
 }
 
 export async function listTopicStates(uid: string, classId: string): Promise<TopicStateDoc[]> {

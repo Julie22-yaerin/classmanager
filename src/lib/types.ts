@@ -76,9 +76,11 @@ export type SignalType = (typeof SIGNAL_TYPES)[number];
 
 export function slugifyTopic(label: string): string {
   const slug = label
+    .normalize("NFKD")
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/\p{M}/gu, "") // strip combining accent marks (é → e), but keep non-Latin letters (中文, العربية) distinct
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
     .replace(/^-+|-+$/g, "");
   return slug || "topic";
 }

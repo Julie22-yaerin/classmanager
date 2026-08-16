@@ -1,5 +1,5 @@
 import type OpenAI from "openai";
-import { SIGNAL_TYPES } from "@/lib/types";
+import { SIGNAL_TYPES, type SignalType } from "@/lib/types";
 
 /**
  * Every tag processor asks the model for the same shaped output via a
@@ -133,7 +133,7 @@ export interface RespondToolInput {
   evidence_signals:
     | {
         topic: string;
-        signal_type: (typeof SIGNAL_TYPES)[number];
+        signal_type: SignalType;
         raw_evidence: string;
         normalized_evidence: string;
         strength: number;

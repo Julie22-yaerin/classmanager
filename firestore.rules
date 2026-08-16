@@ -68,7 +68,10 @@ service cloud.firestore {
       // Evidence-scoring engine: raw typed observations (evidenceSignals) and
       // the deterministic scores computed from them per topic (topicStates).
       match /evidenceSignals/{signalId} {
-        allow read, write: if isOwner(uid) && withinSize('rawEvidence', 2000) && withinSize('normalizedEvidence', 500);
+        allow read, write: if isOwner(uid) &&
+          withinSize('rawEvidence', 2000) &&
+          withinSize('normalizedEvidence', 500) &&
+          withinSize('topicLabel', 200);
       }
 
       match /topicStates/{topicStateId} {

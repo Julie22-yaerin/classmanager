@@ -179,26 +179,34 @@ export default function ChatPage() {
         }
 
         if (result.evidence_signals?.length) {
-          const evidenceNow = new Date().toISOString();
-          await recordEvidenceSignals(
-            user.uid,
-            result.evidence_signals.map((s) => ({
-              classId,
-              topicId: slugifyTopic(s.topic),
-              topicLabel: s.topic,
-              signalType: s.signal_type,
-              rawEvidence: s.raw_evidence,
-              normalizedEvidence: s.normalized_evidence,
-              strength: clamp01(s.strength),
-              specificity: clamp01(s.specificity),
-              extractionConfidence: clamp01(s.extraction_confidence),
-              sourceType: "chat",
-              materialId,
-              createdAt: evidenceNow,
-            })),
-          );
-          const touchedTopics = new Map(result.evidence_signals.map((s) => [slugifyTopic(s.topic), s.topic]));
-          await Promise.all([...touchedTopics].map(([topicId, topicLabel]) => recomputeTopicState(user.uid, classId, topicId, topicLabel)));
+          // Evidence scoring is auxiliary to the chat reply — if it fails (a
+          // rules rejection, a size-limit violation, an offline client), the
+          // student should still get the reply the model already produced,
+          // not lose it because a background scoring write rejected.
+          try {
+            const evidenceNow = new Date().toISOString();
+            await recordEvidenceSignals(
+              user.uid,
+              result.evidence_signals.map((s) => ({
+                classId,
+                topicId: slugifyTopic(s.topic),
+                topicLabel: s.topic,
+                signalType: s.signal_type,
+                rawEvidence: s.raw_evidence,
+                normalizedEvidence: s.normalized_evidence,
+                strength: clamp01(s.strength),
+                specificity: clamp01(s.specificity),
+                extractionConfidence: clamp01(s.extraction_confidence),
+                sourceType: "chat",
+                materialId,
+                createdAt: evidenceNow,
+              })),
+            );
+            const touchedTopics = new Map(result.evidence_signals.map((s) => [slugifyTopic(s.topic), s.topic]));
+            await Promise.all([...touchedTopics].map(([topicId, topicLabel]) => recomputeTopicState(user.uid, classId, topicId, topicLabel)));
+          } catch (evidenceErr) {
+            console.error("evidence signal persistence failed", evidenceErr);
+          }
         }
       }
 

@@ -35,16 +35,25 @@ export default function IntelligencePanel({ classId }: { classId: string }) {
   const { user } = useAuth();
   const [states, setStates] = useState<TopicStateDoc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<View>("map");
 
   useEffect(() => {
     if (!user) return;
     let active = true;
     (async () => {
-      const result = await listTopicStates(user.uid, classId);
-      if (!active) return;
-      setStates(result);
-      setLoading(false);
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await listTopicStates(user.uid, classId);
+        if (!active) return;
+        setStates(result);
+      } catch {
+        if (!active) return;
+        setError("Could not load topic intelligence — try again later.");
+      } finally {
+        if (active) setLoading(false);
+      }
     })();
     return () => {
       active = false;
@@ -53,6 +62,10 @@ export default function IntelligencePanel({ classId }: { classId: string }) {
 
   if (loading) {
     return <p className="text-sm text-zinc-500">Loading…</p>;
+  }
+
+  if (error) {
+    return <p className="text-sm text-red-600 dark:text-red-400">{error}</p>;
   }
 
   if (states.length === 0) {
@@ -109,20 +122,22 @@ export default function IntelligencePanel({ classId }: { classId: string }) {
       )}
 
       {view === "forecast" && (
-        <ul className="mt-4 flex flex-col gap-3">
-          {forecastSorted.map((s) => (
-            <li key={s.id} className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-medium text-zinc-900 dark:text-zinc-50">{s.topicLabel}</span>
-                <span className="text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{Math.round(s.pExam * 100)}%</span>
-              </div>
-              <p className={`mt-1 text-xs font-medium ${CONFIDENCE_STYLE[s.confidenceTier]}`}>{s.confidenceTier} confidence</p>
-            </li>
-          ))}
-          <li className="text-xs text-zinc-400">
+        <>
+          <ul className="mt-4 flex flex-col gap-3">
+            {forecastSorted.map((s) => (
+              <li key={s.id} className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-zinc-900 dark:text-zinc-50">{s.topicLabel}</span>
+                  <span className="text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{Math.round(s.pExam * 100)}%</span>
+                </div>
+                <p className={`mt-1 text-xs font-medium ${CONFIDENCE_STYLE[s.confidenceTier]}`}>{s.confidenceTier} confidence</p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs text-zinc-400">
             These percentages come from a fixed starting model, not yet calibrated against real outcomes — treat them as directional, not exact.
-          </li>
-        </ul>
+          </p>
+        </>
       )}
 
       {view === "move" && (
@@ -140,7 +155,6 @@ export default function IntelligencePanel({ classId }: { classId: string }) {
               </p>
             </li>
           ))}
-          {moveSorted.length === 0 && <li className="text-sm text-zinc-500">Nothing to recommend yet.</li>}
         </ul>
       )}
     </section>

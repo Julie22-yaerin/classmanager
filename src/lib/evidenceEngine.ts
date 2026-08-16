@@ -81,7 +81,7 @@ function eqsWeightedAverage(signals: EvidenceSignalDoc[], types: SignalType[], n
   return weightSum > 0 ? clamp01(scoreSum / weightSum) : 0;
 }
 
-export interface TopicStateComputation {
+export interface TopicComponents {
   teacherEmphasis: number;
   historicalFrequency: number;
   curriculumCentrality: number;
@@ -91,6 +91,9 @@ export interface TopicStateComputation {
   questionPatternSimilarity: number;
   studentRisk: number;
   sourceDiversity: number;
+}
+
+export interface TopicStateComputation extends TopicComponents {
   signalCount: number;
   tps: number;
   tpsTier: TpsTier;
@@ -100,7 +103,7 @@ export interface TopicStateComputation {
 }
 
 /** Aggregates a topic's evidence signals into its component scores. */
-export function computeTopicComponents(signals: EvidenceSignalDoc[], now: Date = new Date()) {
+export function computeTopicComponents(signals: EvidenceSignalDoc[], now: Date = new Date()): TopicComponents {
   const teacherEmphasis = eqsWeightedAverage(signals, E_TYPES, now);
   const historicalFrequency = eqsWeightedAverage(signals, H_TYPES, now);
   const curriculumCentrality = eqsWeightedAverage(signals, C_TYPES, now);
@@ -139,7 +142,7 @@ export function tpsTierOf(tps: number): TpsTier {
 }
 
 /** Topic Priority Score, ∈ [0,100]. */
-export function computeTPS(c: ReturnType<typeof computeTopicComponents>): number {
+export function computeTPS(c: TopicComponents): number {
   const weighted =
     0.2 * c.teacherEmphasis +
     0.15 * c.historicalFrequency +
@@ -156,7 +159,7 @@ export function computeTPS(c: ReturnType<typeof computeTopicComponents>): number
 const LOGISTIC_BETA = { b0: -1.5, E: 2.2, H: 1.8, C: 1.0, R: 0.8, P: 1.4, A: 0.6, Q: 1.6 };
 
 /** Predicted exam probability for a topic, ∈ [0,1], via logistic regression over the component scores. */
-export function computePExam(c: ReturnType<typeof computeTopicComponents>): number {
+export function computePExam(c: TopicComponents): number {
   const z =
     LOGISTIC_BETA.b0 +
     LOGISTIC_BETA.E * c.teacherEmphasis +
@@ -178,7 +181,7 @@ export function confidenceTierOf(confidence: number): ConfidenceTier {
 }
 
 /** Confidence in the topic's scores, ∈ [0,1] — see file header for which spec components are approximated. */
-export function computeConfidence(signals: EvidenceSignalDoc[], c: ReturnType<typeof computeTopicComponents>, now: Date = new Date()): number {
+export function computeConfidence(signals: EvidenceSignalDoc[], c: TopicComponents, now: Date = new Date()): number {
   if (signals.length === 0) return 0;
   const avgEQS = signals.reduce((sum, s) => sum + computeEQS(s, now), 0) / signals.length;
   const countScore = clamp01(signals.length / 8); // saturates once a topic has ~8 independent signals
