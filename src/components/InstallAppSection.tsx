@@ -24,7 +24,7 @@ export default function InstallAppSection() {
         </p>
       ) : (
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
-          On Chrome/Edge, use the install icon in the address bar (or the browser menu → <strong>Install app</strong>) to add School AI to your home
+          On Chrome/Edge, use the install icon in the address bar (or the browser menu → <strong>Install app</strong>) to add Lyceum to your home
           screen or desktop.
         </p>
       )}

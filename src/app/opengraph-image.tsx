@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "School AI — one chat that learns your classes";
+export const alt = "Lyceum — one chat that learns your classes";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -29,7 +29,7 @@ export default async function OpengraphImage() {
             marginBottom: 40,
           }}
         />
-        <div style={{ fontSize: 72, fontWeight: 700, color: "#fafafa", letterSpacing: -1 }}>School AI</div>
+        <div style={{ fontSize: 72, fontWeight: 700, color: "#fafafa", letterSpacing: -1 }}>Lyceum</div>
         <div style={{ fontSize: 30, color: "#a1a1aa", marginTop: 16 }}>One chat that learns your classes</div>
       </div>
     ),

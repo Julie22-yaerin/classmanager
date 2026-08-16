@@ -7,6 +7,8 @@ import ClassSelect from "@/components/chat/ClassSelect";
 import HomeworkModeSelect from "@/components/chat/HomeworkModeSelect";
 import MessageBubble from "@/components/chat/MessageBubble";
 import LaurelAvatar from "@/components/LaurelAvatar";
+import DeadlineCalendarWidget from "@/components/home/DeadlineCalendarWidget";
+import TopPredictionWidget from "@/components/home/TopPredictionWidget";
 import { fileToAttachment, type PendingAttachment } from "@/lib/fileToAttachment";
 import { useAuth } from "@/lib/authContext";
 import { listClasses } from "@/lib/firestore/classes";
@@ -232,12 +234,18 @@ export default function ChatPage() {
           )}
 
           {!loading && classes.length > 0 && messages.length === 0 && !clarification && (
-            <div className="flex flex-col items-center gap-3 py-16 text-center">
-              <LaurelAvatar size={48} />
-              <p className="text-lg font-medium text-zinc-700 dark:text-zinc-200">What are we working on?</p>
-              <p className="max-w-sm text-sm text-zinc-500">
-                Tag what you send — homework, a past exam, a recording, material, notes, or an announcement — and it&apos;ll be filed into the right class.
-              </p>
+            <div className="flex flex-col items-center gap-8 py-10">
+              <div className="flex flex-col items-center gap-3 text-center">
+                <LaurelAvatar size={48} />
+                <p className="text-2xl font-medium text-zinc-700 dark:text-zinc-200">How&apos;s school going so far?</p>
+                <p className="max-w-sm text-sm text-zinc-500">
+                  Tag what you send — homework, a past exam, a recording, material, notes, or an announcement — and it&apos;ll be filed into the right class.
+                </p>
+              </div>
+              <div className="grid w-full gap-4 sm:grid-cols-2">
+                <DeadlineCalendarWidget />
+                <TopPredictionWidget />
+              </div>
             </div>
           )}
 

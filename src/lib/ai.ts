@@ -20,7 +20,7 @@ function client(role: "main" | "perception"): OpenAI {
     baseURL: "https://openrouter.ai/api/v1",
     defaultHeaders: {
       "HTTP-Referer": "https://github.com/Julie22-yaerin/classmanager",
-      "X-Title": "School AI",
+      "X-Title": "Lyceum",
     },
   });
 }

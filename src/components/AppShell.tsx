@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import LaurelAvatar from "@/components/LaurelAvatar";
 import MaterialsConsentModal from "@/components/MaterialsConsentModal";
+import DeadlineReminders from "@/components/DeadlineReminders";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -20,6 +21,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
       <MaterialsConsentModal />
+      <DeadlineReminders />
       {open && (
         <button
           aria-label="Close menu"
@@ -47,7 +49,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </svg>
           </button>
           <LaurelAvatar size={22} />
-          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">School AI</span>
+          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Lyceum</span>
         </div>
         {children}
       </div>

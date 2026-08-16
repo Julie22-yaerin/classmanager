@@ -18,7 +18,7 @@ export default function LandingPage() {
       <header className="flex items-center justify-between px-6 py-6 sm:px-10">
         <div className="flex items-center gap-2">
           <LaurelAvatar size={26} />
-          <span className="text-sm font-semibold tracking-tight">School AI</span>
+          <span className="text-sm font-semibold tracking-tight">Lyceum</span>
         </div>
         <Link href="/login" className="text-sm text-zinc-400 transition-colors hover:text-zinc-50">
           Sign in
@@ -52,7 +52,7 @@ export default function LandingPage() {
       </section>
 
       <footer className="flex flex-col items-center gap-2 border-t border-zinc-900 px-6 py-8 text-xs text-zinc-600 sm:flex-row sm:justify-between sm:px-10">
-        <span>© {new Date().getFullYear()} School AI</span>
+        <span>© {new Date().getFullYear()} Lyceum</span>
         <div className="flex gap-4">
           <Link href="/privacy" className="hover:text-zinc-400">
             Privacy

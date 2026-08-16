@@ -4,7 +4,7 @@ import LaurelAvatar from "@/components/LaurelAvatar";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "What School AI collects, why, and how it's used.",
+  description: "What Lyceum collects, why, and how it's used.",
   robots: { index: true, follow: true },
 };
 
@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-4 py-12 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
       <Link href="/" className="flex items-center gap-2 self-start">
         <LaurelAvatar size={28} />
-        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">School AI</span>
+        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Lyceum</span>
       </Link>
 
       <div>
@@ -22,7 +22,7 @@ export default function PrivacyPage() {
       </div>
 
       <p>
-        School AI is a study assistant: you tell it about your teachers and classes, send it homework, exam materials,
+        Lyceum is a study assistant: you tell it about your teachers and classes, send it homework, exam materials,
         recordings, and notes, and it helps you complete schoolwork and prepare for exams. This page explains what data
         that involves and how it&apos;s handled.
       </p>
@@ -30,7 +30,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Who&apos;s responsible for this data</h2>
         <p className="mt-2">
-          School AI is operated by the app operator, contactable at{" "}
+          Lyceum is operated by the app operator, contactable at{" "}
           <a href="mailto:yris22@thelyceum.site" className="underline">
             yris22@thelyceum.site
           </a>{" "}
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Age &amp; parental consent</h2>
         <p className="mt-2">
-          School AI is built for students, including those under 18. Creating an account requires confirming you&apos;re
+          Lyceum is built for students, including those under 18. Creating an account requires confirming you&apos;re
           16 or older, or that a parent/guardian created the account and consents to your use of it — that
           confirmation happens at sign-up. If you&apos;re a parent or guardian and believe a child under 16 created an
           account without your consent, contact{" "}
@@ -79,7 +79,7 @@ export default function PrivacyPage() {
         <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">Why we&apos;re allowed to process this</h2>
         <p className="mt-2">
           Account info and the content you submit are processed to perform the service you&apos;ve asked for — that&apos;s
-          the contractual basis for using School AI. Usage tracking (token counts) is processed under our legitimate
+          the contractual basis for using Lyceum. Usage tracking (token counts) is processed under our legitimate
           interest in keeping the free-use allowance fair and the service financially sustainable. Analytics cookies
           run only with your consent (see the cookie banner and the toggle in Settings).
         </p>

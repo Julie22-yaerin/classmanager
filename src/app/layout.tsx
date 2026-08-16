@@ -19,13 +19,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "School AI — one chat that learns your classes",
-    template: "%s — School AI",
+    default: "Lyceum — one chat that learns your classes",
+    template: "%s — Lyceum",
   },
   description: "One chat that learns how each student's teachers, classes, curriculum, and assessment style actually work.",
   robots: { index: false, follow: false }, // most routes are behind auth; per-page overrides opt public pages back in
   openGraph: {
-    siteName: "School AI",
+    siteName: "Lyceum",
     type: "website",
   },
   twitter: {
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "School AI",
+    title: "Lyceum",
   },
 };
 
