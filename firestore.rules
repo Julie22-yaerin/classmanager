@@ -52,6 +52,10 @@ service cloud.firestore {
       match /teacherSimulations/{simulationId} {
         allow read, write: if isOwner(uid);
       }
+
+      match /classUpdates/{updateId} {
+        allow read, write: if isOwner(uid) && withinSize('topic', 200) && withinSize('reason', 2000);
+      }
     }
   }
 }

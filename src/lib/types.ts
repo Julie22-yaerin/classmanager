@@ -53,6 +53,7 @@ export interface TopicPriorityItem {
   topic: string;
   weight: number; // 1-5
   reason: string;
+  evidence?: string[];
 }
 
 export interface ImportantDateItem {

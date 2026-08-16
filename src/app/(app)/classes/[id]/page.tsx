@@ -9,6 +9,7 @@ import { listMaterialsForClass } from "@/lib/firestore/materials";
 import { listDeadlines } from "@/lib/firestore/deadlines";
 import { listExamReports } from "@/lib/firestore/examReports";
 import ClassMemoryPanel from "@/components/class/ClassMemoryPanel";
+import WhatChangedPanel from "@/components/class/WhatChangedPanel";
 import MaterialsList from "@/components/class/MaterialsList";
 import ExamModePanel from "@/components/class/ExamModePanel";
 import TeacherPlaybookPanel from "@/components/class/TeacherPlaybookPanel";
@@ -80,6 +81,10 @@ export default function ClassDetailPage() {
         {cls.subject} · Grade {cls.grade}
       </h1>
       <p className="text-sm text-zinc-500">Taught by {cls.teacherName}</p>
+
+      <div className="mt-6">
+        <WhatChangedPanel classId={cls.id} />
+      </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-6">
