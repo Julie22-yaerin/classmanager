@@ -1,4 +1,5 @@
 import type OpenAI from "openai";
+import { SIGNAL_TYPES } from "@/lib/types";
 
 /**
  * Every tag processor asks the model for the same shaped output via a
@@ -78,8 +79,35 @@ export const RESPOND_TOOL: OpenAI.Chat.Completions.ChatCompletionFunctionTool = 
             recurring_patterns: { type: "string" },
           },
         },
+        evidence_signals: {
+          type: ["array", "null"],
+          description:
+            "Structured evidence for the deterministic prediction engine — raw, typed observations, NOT a priority judgment (never output a weight or importance score here). For each distinct piece of evidence about a topic — the teacher stressing it, it recurring on past exams, a deadline tied to it, homework about it, etc — emit one entry. Never invent evidence that isn't traceable to this input. Omit entirely (null) if this input contains no such evidence.",
+          items: {
+            type: "object",
+            properties: {
+              topic: { type: "string", description: "The topic this evidence is about." },
+              signal_type: {
+                type: "string",
+                enum: [...SIGNAL_TYPES],
+                description: "Best-fitting category for this evidence.",
+              },
+              raw_evidence: { type: "string", description: "Verbatim or near-verbatim quote/paraphrase of the evidence from the input." },
+              normalized_evidence: { type: "string", description: "One short, plain sentence summarizing what this evidence shows." },
+              strength: { type: "number", minimum: 0, maximum: 1, description: "How strongly this evidence indicates the topic's importance, 0-1." },
+              specificity: { type: "number", minimum: 0, maximum: 1, description: "How concrete and specific this evidence is vs vague, 0-1." },
+              extraction_confidence: {
+                type: "number",
+                minimum: 0,
+                maximum: 1,
+                description: "Your own confidence that you extracted this evidence correctly from the input, 0-1.",
+              },
+            },
+            required: ["topic", "signal_type", "raw_evidence", "normalized_evidence", "strength", "specificity", "extraction_confidence"],
+          },
+        },
       },
-      required: ["reply", "topic", "memory_updates", "deadlines", "exam_analysis"],
+      required: ["reply", "topic", "memory_updates", "deadlines", "exam_analysis", "evidence_signals"],
     },
   },
 };
@@ -102,4 +130,15 @@ export interface RespondToolInput {
     mark_distribution: { topic: string; marks: number }[];
     recurring_patterns: string;
   } | null;
+  evidence_signals:
+    | {
+        topic: string;
+        signal_type: (typeof SIGNAL_TYPES)[number];
+        raw_evidence: string;
+        normalized_evidence: string;
+        strength: number;
+        specificity: number;
+        extraction_confidence: number;
+      }[]
+    | null;
 }

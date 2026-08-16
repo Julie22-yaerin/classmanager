@@ -65,6 +65,16 @@ service cloud.firestore {
         allow read, write: if isOwner(uid) && withinSize('claim', 2000) && withinSize('resolutionNote', 2000);
       }
 
+      // Evidence-scoring engine: raw typed observations (evidenceSignals) and
+      // the deterministic scores computed from them per topic (topicStates).
+      match /evidenceSignals/{signalId} {
+        allow read, write: if isOwner(uid) && withinSize('rawEvidence', 2000) && withinSize('normalizedEvidence', 500);
+      }
+
+      match /topicStates/{topicStateId} {
+        allow read, write: if isOwner(uid) && withinSize('topicLabel', 200);
+      }
+
       // Private markers of which shared groupSignals/{fingerprint} docs this
       // user has contributed to, so account deletion can clean those up too.
       match /groupContributionRefs/{fingerprint} {

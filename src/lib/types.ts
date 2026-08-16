@@ -49,6 +49,40 @@ export function isHomeworkMode(value: unknown): value is HomeworkMode {
 
 export type SourceType = "text" | "image" | "pdf" | "audio";
 
+// Evidence Signal taxonomy for the deterministic prediction engine (see
+// src/lib/evidenceEngine.ts). The LLM only ever extracts these — raw,
+// typed observations — never a priority judgment; every score derived
+// from them is computed in code, not asked of the model.
+export const SIGNAL_TYPES = [
+  "TEACHER_EMPHASIS",
+  "TEACHER_REPETITION",
+  "TEACHER_WARNING",
+  "TEACHER_REVIEW",
+  "HOMEWORK_ASSIGNMENT",
+  "HOMEWORK_DIFFICULTY",
+  "EXAM_HISTORY",
+  "QUESTION_PATTERN",
+  "TOPIC_RECURRENCE",
+  "SYLLABUS_POSITION",
+  "CURRICULUM_CENTRALITY",
+  "SLIDE_EMPHASIS",
+  "LECTURE_COVERAGE",
+  "DEADLINE_PROXIMITY",
+  "ASSESSMENT_ANNOUNCEMENT",
+  "STUDENT_PERFORMANCE",
+  "OTHER",
+] as const;
+export type SignalType = (typeof SIGNAL_TYPES)[number];
+
+export function slugifyTopic(label: string): string {
+  const slug = label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || "topic";
+}
+
 export interface TopicPriorityItem {
   topic: string;
   weight: number; // 1-5

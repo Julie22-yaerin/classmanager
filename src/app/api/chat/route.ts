@@ -83,6 +83,7 @@ export async function POST(req: NextRequest) {
           memory_updates: null,
           deadlines: null,
           exam_analysis: null,
+          evidence_signals: null,
           usedTranscript: null,
           skippedProcessing: true,
         });

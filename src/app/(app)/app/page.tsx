@@ -17,12 +17,14 @@ import { listMessages, createMessage } from "@/lib/firestore/messages";
 import { createMaterial } from "@/lib/firestore/materials";
 import { createDeadlines } from "@/lib/firestore/deadlines";
 import { applyMemoryUpdate, appendImportantDates } from "@/lib/firestore/classes";
+import { recordEvidenceSignals, recomputeTopicState } from "@/lib/firestore/evidenceSignals";
+import { clamp01 } from "@/lib/evidenceEngine";
 import { callApi } from "@/lib/apiClient";
 import { toClassContext, toProfileContext } from "@/lib/mappers";
 import type { ClassDoc, MessageDoc, UserProfile } from "@/lib/firestore/types";
 import type { RunChatResult } from "@/lib/aiChat";
 import type { RoutableClass, ClassRouterResult } from "@/lib/classRouter";
-import type { Tag, Mode, HomeworkMode } from "@/lib/types";
+import { slugifyTopic, type Tag, type Mode, type HomeworkMode } from "@/lib/types";
 
 interface PendingSend {
   tag: Tag;
@@ -174,6 +176,29 @@ export default function ChatPage() {
             cls,
             result.deadlines.map((d) => ({ title: d.title, date: d.due_date, source: sourceType })),
           );
+        }
+
+        if (result.evidence_signals?.length) {
+          const evidenceNow = new Date().toISOString();
+          await recordEvidenceSignals(
+            user.uid,
+            result.evidence_signals.map((s) => ({
+              classId,
+              topicId: slugifyTopic(s.topic),
+              topicLabel: s.topic,
+              signalType: s.signal_type,
+              rawEvidence: s.raw_evidence,
+              normalizedEvidence: s.normalized_evidence,
+              strength: clamp01(s.strength),
+              specificity: clamp01(s.specificity),
+              extractionConfidence: clamp01(s.extraction_confidence),
+              sourceType: "chat",
+              materialId,
+              createdAt: evidenceNow,
+            })),
+          );
+          const touchedTopics = new Map(result.evidence_signals.map((s) => [slugifyTopic(s.topic), s.topic]));
+          await Promise.all([...touchedTopics].map(([topicId, topicLabel]) => recomputeTopicState(user.uid, classId, topicId, topicLabel)));
         }
       }
 

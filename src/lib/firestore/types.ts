@@ -1,4 +1,4 @@
-import type { Tag, Mode, HomeworkMode, SourceType, TopicPriorityItem, ImportantDateItem } from "@/lib/types";
+import type { Tag, Mode, HomeworkMode, SourceType, TopicPriorityItem, ImportantDateItem, SignalType } from "@/lib/types";
 
 export interface UserProfile {
   email: string | null;
@@ -221,6 +221,58 @@ export interface PredictionDoc {
   resolutionNote: string | null;
   createdAt: string;
   resolvedAt: string | null;
+}
+
+// Evidence-scoring engine (P0): raw, typed observations the LLM extracts —
+// never a priority judgment. Every score below is computed from these in
+// src/lib/evidenceEngine.ts, deterministically, not asked of the model.
+export interface EvidenceSignalDoc {
+  id: string;
+  classId: string;
+  topicId: string; // slugifyTopic(topicLabel) — groups repeated mentions of the same topic
+  topicLabel: string;
+  signalType: SignalType;
+  rawEvidence: string;
+  normalizedEvidence: string;
+  strength: number; // 0-1, how strongly this evidence indicates the topic's importance
+  specificity: number; // 0-1, how concrete/traceable this evidence is vs vague
+  extractionConfidence: number; // 0-1, the model's own confidence it extracted this correctly
+  sourceType: "chat" | "material";
+  materialId: string | null;
+  createdAt: string;
+}
+
+export type TpsTier = "Critical" | "High" | "Medium" | "Low" | "Minimal";
+export type ConfidenceTier = "Very Strong" | "Strong" | "Moderate" | "Weak" | "Insufficient";
+
+// One per (classId, topicId) — recomputed in full from that topic's
+// EvidenceSignalDocs every time new evidence comes in. Doc id is
+// `${classId}__${topicId}` so recompute is a plain overwrite, not a merge.
+export interface TopicStateDoc {
+  id: string;
+  classId: string;
+  topicId: string;
+  topicLabel: string;
+
+  teacherEmphasis: number; // 0-1 (E)
+  historicalFrequency: number; // 0-1 (H)
+  curriculumCentrality: number; // 0-1 (C)
+  recentActivity: number; // 0-1 (R)
+  assessmentProximity: number; // 0-1 (P)
+  homeworkAlignment: number; // 0-1 (A)
+  questionPatternSimilarity: number; // 0-1 (Q) — used only in P_exam, not TPS
+  studentRisk: number; // 0-1 (D)
+  sourceDiversity: number; // 0-1, unique signal-type categories present
+
+  signalCount: number;
+  tps: number; // 0-100, Topic Priority Score
+  tpsTier: TpsTier;
+  pExam: number; // 0-1, predicted exam probability
+  confidence: number; // 0-1
+  confidenceTier: ConfidenceTier;
+
+  evidenceIds: string[];
+  lastComputedAt: string;
 }
 
 // Group Intelligence: shared, cross-student aggregate signals. These live

@@ -20,11 +20,12 @@ import TeacherSimulatorPanel from "@/components/class/TeacherSimulatorPanel";
 import ClassPredictionsPanel from "@/components/class/ClassPredictionsPanel";
 import GroupIntelligencePanel from "@/components/class/GroupIntelligencePanel";
 import ClassTimelinePanel from "@/components/class/ClassTimelinePanel";
+import IntelligencePanel from "@/components/class/IntelligencePanel";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { listTeacherSimulations } from "@/lib/firestore/teacherSimulations";
 import type { ClassDoc, MaterialDoc, DeadlineDoc, ExamReportDoc, TeacherSimulationDoc, PatternReportDoc } from "@/lib/firestore/types";
 
-const TABS = ["Overview", "Predict & prep", "Curriculum map", "Teacher & peers"] as const;
+const TABS = ["Overview", "Predict & prep", "Intelligence", "Curriculum map", "Teacher & peers"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function ClassDetailPage() {
@@ -144,6 +145,12 @@ export default function ClassDetailPage() {
             <PatternFinderPanel cls={cls} initialReports={patternReports} hasPastExam={materials.some((m) => m.tag === "PastExam")} />
             <ClassPredictionsPanel classId={cls.id} materials={materials} />
           </div>
+        </div>
+      )}
+
+      {tab === "Intelligence" && (
+        <div className="mt-6">
+          <IntelligencePanel classId={cls.id} />
         </div>
       )}
 
