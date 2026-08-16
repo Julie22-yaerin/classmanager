@@ -93,6 +93,8 @@ export interface TimelineBlock {
   label: string;
   topic: string;
   summary: string;
+  mentionsDeadline: boolean;
+  flaggedAction: string | null;
 }
 
 export interface ClassTimeline {
