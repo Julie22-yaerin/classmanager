@@ -10,13 +10,13 @@ import { saveTopicPriorities } from "@/lib/firestore/classes";
 import { getUserProfile } from "@/lib/firestore/profile";
 import type { ClassDoc, ExamReportDoc, MaterialDoc } from "@/lib/firestore/types";
 import type { ExamReportOutput, MaterialSummary } from "@/lib/examMode";
-import { TopicPriorityBars, MarkDistributionBars } from "@/components/class/WeightBars";
+import { TopicPriorityBars, MarkDistributionBars, EvidenceBadge } from "@/components/class/WeightBars";
 
 interface ParsedTopic {
   topic: string;
   weight?: number;
   reason?: string;
-  evidence?: string;
+  evidence?: string | string[];
 }
 
 function toMaterialSummary(m: MaterialDoc): MaterialSummary {
@@ -35,6 +35,9 @@ function ReportView({ report }: { report: ExamReportDoc }) {
 
   return (
     <div className="mt-4 flex flex-col gap-4 text-sm">
+      <div className="flex items-center justify-between">
+        <EvidenceBadge level={report.evidenceStrength} />
+      </div>
       <div>
         <h4 className="text-xs font-medium uppercase tracking-wide text-zinc-500">Topic priority</h4>
         <TopicPriorityBars items={topicPriority} />
@@ -99,6 +102,7 @@ export default function ExamModePanel({ cls, initialReports }: { cls: ClassDoc; 
 
       const saved = await createExamReport(user.uid, {
         classId: cls.id,
+        evidenceStrength: report.evidence_strength,
         topicPriority: report.topic_priority,
         patternAnalysis: report.question_pattern_analysis,
         markDistribution: report.mark_distribution,
@@ -107,7 +111,7 @@ export default function ExamModePanel({ cls, initialReports }: { cls: ClassDoc; 
         reviewSheet: report.review_sheet,
         createdAt: new Date().toISOString(),
       });
-      if (report.topic_priority.length) await saveTopicPriorities(user.uid, cls.id, report.topic_priority);
+      if (report.topic_priority.length) await saveTopicPriorities(user.uid, cls, report.topic_priority);
 
       const refreshed = await listExamReports(user.uid, cls.id);
       setReports(refreshed.length ? refreshed : [saved]);

@@ -103,7 +103,8 @@ export interface MessageDoc {
 export interface ExamReportDoc {
   id: string;
   classId: string;
-  topicPriority: { topic: string; weight: number; reason: string }[];
+  evidenceStrength: "high" | "medium" | "low";
+  topicPriority: { topic: string; weight: number; reason: string; evidence: string[] }[];
   patternAnalysis: string;
   markDistribution: { topic: string; estimated_percent: number }[];
   weakAreas: { topic: string; evidence: string }[];
@@ -112,9 +113,21 @@ export interface ExamReportDoc {
   createdAt: string;
 }
 
+export interface ClassUpdateDoc {
+  id: string;
+  classId: string;
+  className: string;
+  topic: string;
+  fromLevel: "low" | "medium" | "high" | "new";
+  toLevel: "low" | "medium" | "high";
+  reason: string;
+  createdAt: string;
+}
+
 export interface TeacherSimulationDoc {
   id: string;
   classId: string;
+  evidenceStrength: "high" | "medium" | "low";
   nextSessionPrediction: { likelyFocus: string[]; reasoning: string };
   likelyQuestions: { question: string; topic: string; styleNote: string }[];
   studyPlan: { action: string; topic: string; estimatedMinutes: number; markImpact: "high" | "medium" | "low"; reason: string }[];

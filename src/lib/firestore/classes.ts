@@ -2,6 +2,8 @@ import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, up
 import { db } from "@/lib/firebase";
 import type { ClassDoc, TeacherPlaybook } from "@/lib/firestore/types";
 import type { TopicPriorityItem, ImportantDateItem } from "@/lib/types";
+import { diffTopicPriorities } from "@/lib/topicChanges";
+import { recordClassUpdates } from "@/lib/firestore/classUpdates";
 
 function classesRef(uid: string) {
   return collection(db, "users", uid, "classes");
@@ -47,6 +49,23 @@ export async function createClass(uid: string, input: CreateClassInput): Promise
   return { id: ref.id, ...data };
 }
 
+async function recordTopicPriorityChanges(uid: string, cls: ClassDoc, next: TopicPriorityItem[]): Promise<void> {
+  const changes = diffTopicPriorities(cls.topicPriorities, next);
+  if (!changes.length) return;
+  await recordClassUpdates(
+    uid,
+    changes.map((c) => ({
+      classId: cls.id,
+      className: `${cls.subject} · ${cls.teacherName}`,
+      topic: c.topic,
+      fromLevel: c.fromLevel,
+      toLevel: c.toLevel,
+      reason: c.reason,
+      createdAt: new Date().toISOString(),
+    })),
+  );
+}
+
 export interface MemoryUpdate {
   curriculum_note?: string | null;
   teacher_persona?: string | null;
@@ -71,6 +90,10 @@ export async function applyMemoryUpdate(uid: string, classId: string, cls: Class
 
   if (Object.keys(data).length <= 1) return;
   await updateDoc(classRef(uid, classId), data);
+
+  if (updates.topic_priorities && updates.topic_priorities.length) {
+    await recordTopicPriorityChanges(uid, cls, updates.topic_priorities);
+  }
 }
 
 export async function appendImportantDates(uid: string, classId: string, cls: ClassDoc, dates: ImportantDateItem[]): Promise<void> {
@@ -81,9 +104,10 @@ export async function appendImportantDates(uid: string, classId: string, cls: Cl
   });
 }
 
-export async function saveTopicPriorities(uid: string, classId: string, topicPriorities: TopicPriorityItem[]): Promise<void> {
+export async function saveTopicPriorities(uid: string, cls: ClassDoc, topicPriorities: TopicPriorityItem[]): Promise<void> {
   if (topicPriorities.length === 0) return;
-  await updateDoc(classRef(uid, classId), { topicPriorities, updatedAt: new Date().toISOString() });
+  await updateDoc(classRef(uid, cls.id), { topicPriorities, updatedAt: new Date().toISOString() });
+  await recordTopicPriorityChanges(uid, cls, topicPriorities);
 }
 
 export async function savePlaybook(uid: string, classId: string, playbook: TeacherPlaybook): Promise<void> {

@@ -11,6 +11,7 @@ import { getUserProfile } from "@/lib/firestore/profile";
 import type { ClassDoc, TeacherSimulationDoc, MaterialDoc } from "@/lib/firestore/types";
 import type { TeacherSimulationOutput } from "@/lib/teacherSimulator";
 import type { MaterialSummary } from "@/lib/examMode";
+import { EvidenceBadge } from "@/components/class/WeightBars";
 
 const IMPACT_STYLE: Record<"high" | "medium" | "low", string> = {
   high: "text-[#c8942f]",
@@ -53,6 +54,9 @@ function ScoreRange({ label, low, high, dim }: { label: string; low: number; hig
 function SimulationView({ sim }: { sim: TeacherSimulationDoc }) {
   return (
     <div className="mt-4 flex flex-col gap-4 text-sm">
+      <div className="flex items-center justify-between">
+        <EvidenceBadge level={sim.evidenceStrength} />
+      </div>
       <div>
         <h4 className="text-xs font-medium uppercase tracking-wide text-zinc-500">Likely next session</h4>
         <div className="mt-1 flex flex-wrap gap-1.5">
@@ -139,6 +143,7 @@ export default function TeacherSimulatorPanel({ cls, initialSimulations }: { cls
 
       const saved = await createTeacherSimulation(user.uid, {
         classId: cls.id,
+        evidenceStrength: simulation.evidence_strength,
         nextSessionPrediction: {
           likelyFocus: simulation.next_session_prediction.likely_focus,
           reasoning: simulation.next_session_prediction.reasoning,
