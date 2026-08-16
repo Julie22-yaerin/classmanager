@@ -11,6 +11,10 @@ function topicStatesRef(uid: string) {
   return collection(db, "users", uid, "topicStates");
 }
 
+function topicGenerationsRef(uid: string) {
+  return collection(db, "users", uid, "topicGenerations");
+}
+
 function topicStateDocId(classId: string, topicId: string) {
   return `${classId}__${topicId}`;
 }
@@ -45,59 +49,64 @@ export async function listTopicStates(uid: string, classId: string): Promise<Top
 }
 
 /**
+ * Claims the next generation number for (classId, topicId): a per-topic
+ * counter bumped inside a transaction on one small document. Concurrent
+ * callers racing this same transaction are strictly, unambiguously ordered
+ * by Firestore's serialized commits on that document — unlike the signal
+ * content itself (createdAt, evidenceIds), which two independent recomputes
+ * for the same topic can legitimately tie on (every signal from one chat
+ * turn shares a single batch timestamp, and the read window is capped to
+ * MAX_SIGNALS_PER_TOPIC, so neither a timestamp nor a count comparison can
+ * be made airtight against every interleaving). A plain incrementing counter
+ * sidesteps that whole class of tie case entirely: no two calls ever get the
+ * same number.
+ */
+async function claimNextGeneration(uid: string, classId: string, topicId: string): Promise<number> {
+  const ref = doc(topicGenerationsRef(uid), topicStateDocId(classId, topicId));
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const next = ((snap.data()?.generation as number | undefined) ?? 0) + 1;
+    tx.set(ref, { generation: next }, { merge: true });
+    return next;
+  });
+}
+
+/**
  * Reads every evidence signal recorded for (classId, topicId) so far and
  * recomputes that topic's state from scratch — a plain overwrite, not a
  * merge, since every score is a deterministic function of the full signal
  * set, not an incremental update.
  *
- * The signal read above isn't inside a transaction (Firestore transactions
+ * The signal read below isn't inside a transaction (Firestore transactions
  * can't contain a `where`-query read), so two concurrent recomputes for the
  * same topic (e.g. two tabs replying at once) can each read a snapshot and
- * race to write. The transaction below guards the write itself using each
- * computation's (newestSignalAt, signal count) as a composite ordering key —
- * NOT evidenceIds containment: the read above is capped to the
- * MAX_SIGNALS_PER_TOPIC most recent signals, a sliding window, so a later
- * computation is not guaranteed to be a superset of an earlier one (older ids
- * can fall out of the window while the newer computation is still in
- * flight). newestSignalAt alone isn't enough either: every signal recorded
- * from the same chat turn shares one batch timestamp (see `evidenceNow` in
- * app/page.tsx), so two concurrent turns for the same topic can tie on it
- * while covering different signals. Breaking that tie by signal count is
- * sound because evidence is append-only: whichever computation's read landed
- * after both turns' writes committed necessarily saw a strictly larger set,
- * so a higher count is never a regression. (An exact tie on both
- * newestSignalAt *and* count from genuinely disjoint concurrent turns would
- * require two independent chat completions to land the same number of new
- * signals on the same topic within the same millisecond — accepted as an
- * unreachable-in-practice edge case for this P0 slice.)
+ * race to write. This first claims a strictly-ordered generation number (see
+ * claimNextGeneration above), then guards the topicState write with it: the
+ * transaction skips the write if the currently-stored state already carries
+ * a generation at least as high as this one, so a call that lost the
+ * generation race can never clobber one that won it — regardless of which
+ * signals either call happened to see.
  */
 export async function recomputeTopicState(uid: string, classId: string, topicId: string, topicLabel: string): Promise<void> {
+  const myGeneration = await claimNextGeneration(uid, classId, topicId);
   const signals = await listEvidenceSignalsForTopic(uid, classId, topicId);
   if (signals.length === 0) return;
   const computed = computeTopicState(signals);
-  const evidenceIds = signals.map((s) => s.id);
-  // signals is sorted newest-first by listEvidenceSignalsForTopic.
-  const newestSignalAt = signals[0].createdAt;
   const data: Omit<TopicStateDoc, "id"> = {
     classId,
     topicId,
     topicLabel,
     ...computed,
-    evidenceIds,
+    evidenceIds: signals.map((s) => s.id),
     lastComputedAt: new Date().toISOString(),
-    newestSignalAt,
+    generation: myGeneration,
   };
   const ref = doc(topicStatesRef(uid), topicStateDocId(classId, topicId));
   await runTransaction(db, async (tx) => {
     const existing = await tx.get(ref);
     if (existing.exists()) {
-      const existingData = existing.data() as TopicStateDoc;
-      const existingNewestSignalAt = existingData.newestSignalAt;
-      const existingCount = existingData.evidenceIds?.length ?? 0;
-      const isStale =
-        !!existingNewestSignalAt &&
-        (existingNewestSignalAt > newestSignalAt || (existingNewestSignalAt === newestSignalAt && existingCount >= evidenceIds.length));
-      if (isStale) return;
+      const existingGeneration = (existing.data() as TopicStateDoc).generation ?? 0;
+      if (existingGeneration >= myGeneration) return;
     }
     tx.set(ref, data);
   });

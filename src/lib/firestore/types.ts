@@ -273,13 +273,13 @@ export interface TopicStateDoc {
 
   evidenceIds: string[];
   lastComputedAt: string;
-  // createdAt of the newest signal in this computation's (capped) window.
-  // Ordering key for the recompute race guard in recomputeTopicState: since
-  // the window is capped to the most recent MAX_SIGNALS_PER_TOPIC signals, a
-  // later recompute is not always a superset of an earlier one (older ids can
-  // fall out of the window), so staleness can't be judged by evidenceIds
-  // containment — only by which computation saw the newer signal.
-  newestSignalAt: string;
+  // Strictly-ordered per-topic counter claimed via claimNextGeneration in
+  // recomputeTopicState — the ordering key for that function's concurrent-
+  // recompute race guard. Not derived from signal content (createdAt/count):
+  // those can legitimately tie between two independent concurrent
+  // recomputes for the same topic, since one chat turn's signals share a
+  // single batch timestamp and the read window is capped.
+  generation: number;
 }
 
 // Reference Room: AI-suggested study resources, filed by class/topic/time so

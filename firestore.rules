@@ -78,6 +78,13 @@ service cloud.firestore {
         allow read, write: if isOwner(uid) && withinSize('topicLabel', 200);
       }
 
+      // Per-topic generation counter used to order concurrent topicState
+      // recomputes (see claimNextGeneration in evidenceSignals.ts) — no
+      // free-text fields, so no withinSize checks needed.
+      match /topicGenerations/{topicGenerationId} {
+        allow read, write: if isOwner(uid);
+      }
+
       // Reference Room: AI-suggested study resources, filed by class/topic/time.
       match /referenceItems/{referenceItemId} {
         allow read, write: if isOwner(uid) &&
