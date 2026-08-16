@@ -1,19 +1,21 @@
 const BAR_FILL = "#c8942f";
 
-const EVIDENCE_LABEL: Record<"high" | "medium" | "low", string> = {
+type ConfidenceLevel = "high" | "medium" | "low";
+
+const EVIDENCE_LABEL: Record<ConfidenceLevel, string> = {
   high: "High evidence",
   medium: "Medium evidence",
   low: "Low evidence — thin material so far",
 };
 
-const EVIDENCE_STYLE: Record<"high" | "medium" | "low", string> = {
+const EVIDENCE_STYLE: Record<ConfidenceLevel, string> = {
   high: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
   medium: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
   low: "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
 };
 
-export function EvidenceBadge({ level }: { level: "high" | "medium" | "low" }) {
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${EVIDENCE_STYLE[level]}`}>{EVIDENCE_LABEL[level]}</span>;
+export function EvidenceBadge({ level, labels = EVIDENCE_LABEL }: { level: ConfidenceLevel; labels?: Record<ConfidenceLevel, string> }) {
+  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${EVIDENCE_STYLE[level]}`}>{labels[level]}</span>;
 }
 
 function Row({ label, sublabel, value, max, valueLabel }: { label: string; sublabel?: string; value: number; max: number; valueLabel: string }) {

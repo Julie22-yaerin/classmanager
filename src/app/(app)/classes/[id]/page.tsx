@@ -8,15 +8,17 @@ import { getClass } from "@/lib/firestore/classes";
 import { listMaterialsForClass } from "@/lib/firestore/materials";
 import { listDeadlines } from "@/lib/firestore/deadlines";
 import { listExamReports } from "@/lib/firestore/examReports";
+import { listPatternReports } from "@/lib/firestore/patternReports";
 import ClassMemoryPanel from "@/components/class/ClassMemoryPanel";
 import WhatChangedPanel from "@/components/class/WhatChangedPanel";
 import MaterialsList from "@/components/class/MaterialsList";
 import ExamModePanel from "@/components/class/ExamModePanel";
+import PatternFinderPanel from "@/components/class/PatternFinderPanel";
 import TeacherPlaybookPanel from "@/components/class/TeacherPlaybookPanel";
 import TeacherSimulatorPanel from "@/components/class/TeacherSimulatorPanel";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { listTeacherSimulations } from "@/lib/firestore/teacherSimulations";
-import type { ClassDoc, MaterialDoc, DeadlineDoc, ExamReportDoc, TeacherSimulationDoc } from "@/lib/firestore/types";
+import type { ClassDoc, MaterialDoc, DeadlineDoc, ExamReportDoc, TeacherSimulationDoc, PatternReportDoc } from "@/lib/firestore/types";
 
 export default function ClassDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +27,7 @@ export default function ClassDetailPage() {
   const [materials, setMaterials] = useState<MaterialDoc[]>([]);
   const [deadlines, setDeadlines] = useState<DeadlineDoc[]>([]);
   const [examReports, setExamReports] = useState<ExamReportDoc[]>([]);
+  const [patternReports, setPatternReports] = useState<PatternReportDoc[]>([]);
   const [simulations, setSimulations] = useState<TeacherSimulationDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -38,16 +41,18 @@ export default function ClassDetailPage() {
         setLoading(false);
         return;
       }
-      const [m, d, r, s] = await Promise.all([
+      const [m, d, r, p, s] = await Promise.all([
         listMaterialsForClass(user.uid, id),
         listDeadlines(user.uid, id),
         listExamReports(user.uid, id),
+        listPatternReports(user.uid, id),
         listTeacherSimulations(user.uid, id),
       ]);
       setCls(c);
       setMaterials(m);
       setDeadlines(d);
       setExamReports(r);
+      setPatternReports(p);
       setSimulations(s);
       setLoading(false);
     })();
@@ -95,6 +100,7 @@ export default function ClassDetailPage() {
           <TeacherPlaybookPanel cls={cls} onSaved={(playbook) => setCls((prev) => (prev ? { ...prev, playbook } : prev))} />
           <TeacherSimulatorPanel cls={cls} initialSimulations={simulations} />
           <ExamModePanel cls={cls} initialReports={examReports} />
+          <PatternFinderPanel cls={cls} initialReports={patternReports} />
 
           <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="font-medium">Deadlines</h2>

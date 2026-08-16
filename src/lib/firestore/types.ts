@@ -124,6 +124,25 @@ export interface ClassUpdateDoc {
   createdAt: string;
 }
 
+export interface PatternReportDoc {
+  id: string;
+  classId: string;
+  evidenceStrength: "high" | "medium" | "low";
+  patterns: {
+    patternType: string;
+    title: string;
+    description: string;
+    sourceTag: string;
+    sourceExcerpt: string;
+    matchedExcerpt: string;
+    confidence: "high" | "medium" | "low";
+  }[];
+  summary: string;
+  strategicImplication: string;
+  caveat: string;
+  createdAt: string;
+}
+
 export interface TeacherSimulationDoc {
   id: string;
   classId: string;

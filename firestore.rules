@@ -56,6 +56,10 @@ service cloud.firestore {
       match /classUpdates/{updateId} {
         allow read, write: if isOwner(uid) && withinSize('topic', 200) && withinSize('reason', 2000);
       }
+
+      match /patternReports/{reportId} {
+        allow read, write: if isOwner(uid) && withinSize('summary', 5000) && withinSize('strategicImplication', 5000) && withinSize('caveat', 2000);
+      }
     }
   }
 }

@@ -1,5 +1,6 @@
-import type { ClassDoc, UserProfile } from "@/lib/firestore/types";
+import type { ClassDoc, UserProfile, MaterialDoc } from "@/lib/firestore/types";
 import type { ClassContextInput, ProfileContextInput } from "@/lib/aiContext";
+import type { MaterialSummary } from "@/lib/examMode";
 
 export function toClassContext(cls: ClassDoc): ClassContextInput {
   return {
@@ -28,5 +29,14 @@ export function toProfileContext(profile: UserProfile | null): ProfileContextInp
     grade: profile.grade,
     curriculum: profile.curriculum,
     aiStyle: profile.aiStyle,
+  };
+}
+
+export function toMaterialSummary(m: MaterialDoc): MaterialSummary {
+  return {
+    tag: m.tag,
+    topic: m.topic,
+    excerpt: m.rawContent || m.extractedText || m.fileName || "",
+    analysis: m.analysis ? JSON.stringify(m.analysis) : null,
   };
 }
