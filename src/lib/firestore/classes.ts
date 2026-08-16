@@ -4,6 +4,7 @@ import type { ClassDoc, TeacherPlaybook, CurriculumGraphDoc } from "@/lib/firest
 import type { TopicPriorityItem, ImportantDateItem } from "@/lib/types";
 import { diffTopicPriorities } from "@/lib/topicChanges";
 import { recordClassUpdates } from "@/lib/firestore/classUpdates";
+import { contributeGroupSignal } from "@/lib/firestore/groupSignals";
 
 function classesRef(uid: string) {
   return collection(db, "users", uid, "classes");
@@ -94,6 +95,7 @@ export async function applyMemoryUpdate(uid: string, classId: string, cls: Class
 
   if (updates.topic_priorities && updates.topic_priorities.length) {
     await recordTopicPriorityChanges(uid, cls, updates.topic_priorities);
+    await contributeGroupSignal(uid, cls, updates.topic_priorities);
   }
 }
 
@@ -109,6 +111,7 @@ export async function saveTopicPriorities(uid: string, cls: ClassDoc, topicPrior
   if (topicPriorities.length === 0) return;
   await updateDoc(classRef(uid, cls.id), { topicPriorities, updatedAt: new Date().toISOString() });
   await recordTopicPriorityChanges(uid, cls, topicPriorities);
+  await contributeGroupSignal(uid, cls, topicPriorities);
 }
 
 export async function savePlaybook(uid: string, classId: string, playbook: TeacherPlaybook): Promise<void> {

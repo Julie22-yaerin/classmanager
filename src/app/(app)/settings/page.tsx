@@ -38,7 +38,7 @@ export default function SettingsPage() {
     })();
   }, []);
 
-  async function toggleField(field: "allowRecordingUploads", value: boolean) {
+  async function toggleField(field: "allowRecordingUploads" | "shareGroupIntelligence", value: boolean) {
     if (!user) return;
     setProfile((p) => ({ ...p, [field]: value }));
     try {
@@ -117,6 +117,22 @@ export default function SettingsPage() {
               onChange={(e) => toggleField("allowRecordingUploads", e.target.checked)}
             />
             Allow attaching audio recordings (transcribed by AI)
+          </label>
+
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={profile.shareGroupIntelligence === true}
+              onChange={(e) => toggleField("shareGroupIntelligence", e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              Share anonymized topic-priority signals with other students in the same class (Group Intelligence)
+              <span className="mt-0.5 block text-xs text-zinc-500">
+                Only a topic name and its priority weight (1–5) are shared — never reasons, evidence, or any other content. Classes are matched by
+                teacher name, subject, and grade across accounts, which is approximate, not verified.
+              </span>
+            </span>
           </label>
 
           <div>

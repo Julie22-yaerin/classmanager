@@ -26,6 +26,7 @@ export interface UserProfile {
 
   // Privacy & data preferences
   allowRecordingUploads: boolean;
+  shareGroupIntelligence: boolean;
 }
 
 export interface TeacherPlaybook {
@@ -203,4 +204,32 @@ export interface PredictionDoc {
   resolutionNote: string | null;
   createdAt: string;
   resolvedAt: string | null;
+}
+
+// Group Intelligence: shared, cross-student aggregate signals. These live
+// outside users/{uid} — in a top-level groupSignals collection any
+// consenting, signed-in user can read/write — since the whole point is
+// combining signal across independent accounts. Only topic + weight is
+// shared, never reasons, evidence, or any other class/material content.
+export interface GroupSignalDoc {
+  fingerprint: string;
+  teacherName: string;
+  subject: string;
+  grade: string;
+  createdAt: string;
+}
+
+export interface GroupContributionDoc {
+  topicWeights: { topic: string; weight: number }[];
+  contributedAt: string;
+}
+
+// Private marker under the contributing user's own uid, recording which
+// shared fingerprints they've contributed to — lets account deletion clean
+// up the corresponding shared contribution doc without needing to scan the
+// whole groupSignals collection.
+export interface GroupContributionRefDoc {
+  id: string;
+  fingerprint: string;
+  updatedAt: string;
 }
