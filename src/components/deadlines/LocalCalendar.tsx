@@ -10,7 +10,7 @@ function toDateKey(d: Date): string {
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
-export default function LocalCalendar({ deadlines }: { deadlines: DeadlineDoc[] }) {
+export default function LocalCalendar({ deadlines, compact = false }: { deadlines: DeadlineDoc[]; compact?: boolean }) {
   const today = useMemo(() => new Date(), []);
   const [cursor, setCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selected, setSelected] = useState<string | null>(toDateKey(today));
@@ -95,17 +95,19 @@ export default function LocalCalendar({ deadlines }: { deadlines: DeadlineDoc[] 
         })}
       </div>
 
-      <div className="mt-4">
-        <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-          {selected ? new Date(selected).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" }) : "Pick a date"}
-        </h3>
-        <ul className="mt-2 flex flex-col gap-1.5">
-          {selectedItems.map((d) => (
-            <DeadlineRow key={d.id} deadline={d} />
-          ))}
-          {selected && selectedItems.length === 0 && <li className="text-sm text-zinc-500">Nothing due.</li>}
-        </ul>
-      </div>
+      {!compact && (
+        <div className="mt-4">
+          <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+            {selected ? new Date(selected).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" }) : "Pick a date"}
+          </h3>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {selectedItems.map((d) => (
+              <DeadlineRow key={d.id} deadline={d} />
+            ))}
+            {selected && selectedItems.length === 0 && <li className="text-sm text-zinc-500">Nothing due.</li>}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

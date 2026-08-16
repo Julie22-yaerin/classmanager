@@ -14,8 +14,11 @@ export const TAG_INSTRUCTIONS: Record<Tag, string> = {
     "transcription key). Summarize the lecture, extract any homework, deadlines, or key statements the teacher made, and update " +
     "class memory (curriculum, teacher persona/style) accordingly. Put any dates/tasks in the deadlines field.",
   Material:
-    "This is course material (a handout, slide, or reading). Identify its topic and how it fits the curriculum, and note anything " +
-    "it reveals about teaching style or topic priority. Keep the reply short — mainly confirm what was filed and where it fits.",
+    "This is course material (a handout, slide, reading, syllabus, or timetable/schedule). Identify its topic and how it fits the " +
+    "curriculum, and note anything it reveals about teaching style or topic priority. If it contains dates, due dates, or a class " +
+    "schedule (e.g. a syllabus with assignment dates, or a timetable listing when this class meets), extract every one into the " +
+    "deadlines field the same way an Announcement would — a student uploading their timetable expects it on their calendar, not just " +
+    "filed away. Keep the reply short — mainly confirm what was filed, where it fits, and what (if anything) was added to the calendar.",
   Notes:
     "These are the student's own notes. File them into class knowledge. Keep the reply short and helpful — e.g. note gaps or connections " +
     "to other material, but do not lecture.",
