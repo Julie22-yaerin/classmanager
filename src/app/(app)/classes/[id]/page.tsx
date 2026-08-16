@@ -19,6 +19,7 @@ import TeacherPlaybookPanel from "@/components/class/TeacherPlaybookPanel";
 import TeacherSimulatorPanel from "@/components/class/TeacherSimulatorPanel";
 import ClassPredictionsPanel from "@/components/class/ClassPredictionsPanel";
 import GroupIntelligencePanel from "@/components/class/GroupIntelligencePanel";
+import ClassTimelinePanel from "@/components/class/ClassTimelinePanel";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { listTeacherSimulations } from "@/lib/firestore/teacherSimulations";
 import type { ClassDoc, MaterialDoc, DeadlineDoc, ExamReportDoc, TeacherSimulationDoc, PatternReportDoc } from "@/lib/firestore/types";
@@ -98,6 +99,7 @@ export default function ClassDetailPage() {
         <div className="flex flex-col gap-6">
           <ClassMemoryPanel cls={cls} />
           <MaterialsList materials={materials} />
+          <ClassTimelinePanel cls={cls} materials={materials} />
         </div>
         <div className="flex flex-col gap-6">
           <TeacherPlaybookPanel cls={cls} onSaved={(playbook) => setCls((prev) => (prev ? { ...prev, playbook } : prev))} />

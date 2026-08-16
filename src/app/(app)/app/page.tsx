@@ -143,6 +143,7 @@ export default function ChatPage() {
           analysis: result.exam_analysis as unknown as Record<string, unknown> | null,
           fileName: payload.attachment?.fileName ?? null,
           mimeType: payload.attachment?.mimeType ?? null,
+          timeline: null,
           createdAt: new Date().toISOString(),
         });
         materialId = material.id;

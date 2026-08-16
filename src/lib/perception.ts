@@ -42,7 +42,13 @@ export async function transcribeAudio(attachment: ChatAttachment): Promise<strin
     {
       role: "user",
       content: [
-        { type: "text", text: "Transcribe this audio verbatim. Only output the transcript, nothing else." },
+        {
+          type: "text",
+          text:
+            "Transcribe this audio verbatim. Insert an estimated timestamp marker like [MM:SS] at the start of each new sentence or whenever the " +
+            "speaker moves to a new point — estimate elapsed time from the audio's own pacing, since there's no separate time signal available. " +
+            "Only output the transcript with these markers, nothing else.",
+        },
         { type: "input_audio", input_audio: { data: attachment.base64, format } },
       ],
     },
