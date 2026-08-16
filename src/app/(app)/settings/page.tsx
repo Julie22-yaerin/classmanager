@@ -8,6 +8,7 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/lib/authContext";
 import { getUserProfile, updateUserProfile } from "@/lib/firestore/profile";
 import { exportAllUserData, deleteAllUserData } from "@/lib/firestore/dataControls";
+import { deleteAllGroupContributions } from "@/lib/firestore/groupSignals";
 import InstallAppSection from "@/components/InstallAppSection";
 import type { UserProfile } from "@/lib/firestore/types";
 
@@ -43,6 +44,11 @@ export default function SettingsPage() {
     setProfile((p) => ({ ...p, [field]: value }));
     try {
       await updateUserProfile(user.uid, { [field]: value });
+      // Turning Group Intelligence off withdraws what's already been shared,
+      // not just stops future sharing — otherwise "off" would be a lie.
+      if (field === "shareGroupIntelligence" && !value) {
+        await deleteAllGroupContributions(user.uid);
+      }
     } catch {
       setProfile((p) => ({ ...p, [field]: !value }));
     }
@@ -130,7 +136,8 @@ export default function SettingsPage() {
               Share anonymized topic-priority signals with other students in the same class (Group Intelligence)
               <span className="mt-0.5 block text-xs text-zinc-500">
                 Only a topic name and its priority weight (1–5) are shared — never reasons, evidence, or any other content. Classes are matched by
-                teacher name, subject, and grade across accounts, which is approximate, not verified.
+                teacher name, subject, and grade across accounts, which is approximate, not verified. Turning this off withdraws everything you&apos;ve
+                already shared, not just future updates.
               </span>
             </span>
           </label>
