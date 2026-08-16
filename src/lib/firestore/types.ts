@@ -273,6 +273,13 @@ export interface TopicStateDoc {
 
   evidenceIds: string[];
   lastComputedAt: string;
+  // createdAt of the newest signal in this computation's (capped) window.
+  // Ordering key for the recompute race guard in recomputeTopicState: since
+  // the window is capped to the most recent MAX_SIGNALS_PER_TOPIC signals, a
+  // later recompute is not always a superset of an earlier one (older ids can
+  // fall out of the window), so staleness can't be judged by evidenceIds
+  // containment — only by which computation saw the newer signal.
+  newestSignalAt: string;
 }
 
 // Reference Room: AI-suggested study resources, filed by class/topic/time so

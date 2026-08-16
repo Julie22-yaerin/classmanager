@@ -53,34 +53,39 @@ export async function listTopicStates(uid: string, classId: string): Promise<Top
  * The signal read above isn't inside a transaction (Firestore transactions
  * can't contain a `where`-query read), so two concurrent recomputes for the
  * same topic (e.g. two tabs replying at once) can each read a snapshot and
- * race to write. Signals are append-only — never edited or deleted — so a
- * recompute that saw more signals is strictly newer information than one
- * that saw fewer. The transaction below guards the write itself: it reads
- * whatever is currently stored and skips the write if that stored state
- * already reflects every signal this computation saw (i.e. a newer/equal
- * recompute already landed), so an in-flight older computation can't clobber
- * a newer one.
+ * race to write. The transaction below guards the write itself using each
+ * computation's newest-signal timestamp as the ordering key — NOT evidenceIds
+ * containment: the read above is capped to the MAX_SIGNALS_PER_TOPIC most
+ * recent signals, a sliding window, so a later computation is not guaranteed
+ * to be a superset of an earlier one (older ids can fall out of the window
+ * while the newer computation is still in flight). Comparing the newest
+ * signal each computation actually saw is well-defined regardless of the
+ * cap: it reads whatever is currently stored and skips the write if that
+ * stored state was computed from a signal at least as new as this
+ * computation's newest, so an in-flight older computation can't clobber a
+ * newer one that already landed.
  */
 export async function recomputeTopicState(uid: string, classId: string, topicId: string, topicLabel: string): Promise<void> {
   const signals = await listEvidenceSignalsForTopic(uid, classId, topicId);
   if (signals.length === 0) return;
   const computed = computeTopicState(signals);
-  const evidenceIds = signals.map((s) => s.id);
+  // signals is sorted newest-first by listEvidenceSignalsForTopic.
+  const newestSignalAt = signals[0].createdAt;
   const data: Omit<TopicStateDoc, "id"> = {
     classId,
     topicId,
     topicLabel,
     ...computed,
-    evidenceIds,
+    evidenceIds: signals.map((s) => s.id),
     lastComputedAt: new Date().toISOString(),
+    newestSignalAt,
   };
   const ref = doc(topicStatesRef(uid), topicStateDocId(classId, topicId));
   await runTransaction(db, async (tx) => {
     const existing = await tx.get(ref);
     if (existing.exists()) {
-      const existingIds = new Set((existing.data() as TopicStateDoc).evidenceIds ?? []);
-      const isStale = evidenceIds.length <= existingIds.size && evidenceIds.every((id) => existingIds.has(id));
-      if (isStale) return;
+      const existingNewestSignalAt = (existing.data() as TopicStateDoc).newestSignalAt;
+      if (existingNewestSignalAt && existingNewestSignalAt >= newestSignalAt) return;
     }
     tx.set(ref, data);
   });
