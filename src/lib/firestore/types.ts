@@ -43,6 +43,7 @@ export type CoverageStatus = "covered" | "in_progress" | "not_covered";
 export interface CurriculumConcept {
   label: string;
   status: CoverageStatus;
+  materialIds: string[];
 }
 
 export interface CurriculumTopic {
