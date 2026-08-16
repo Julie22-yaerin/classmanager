@@ -6,9 +6,12 @@ import { callApi } from "@/lib/apiClient";
 import { toClassContext, toProfileContext, toMaterialSummary } from "@/lib/mappers";
 import { listMaterialsForClass } from "@/lib/firestore/materials";
 import { saveCurriculumGraph } from "@/lib/firestore/classes";
+import { recordClassUpdates } from "@/lib/firestore/classUpdates";
+import { diffCurriculumCoverage } from "@/lib/curriculumChanges";
 import { getUserProfile } from "@/lib/firestore/profile";
-import type { ClassDoc, CoverageStatus, CurriculumTopic, CurriculumUnit } from "@/lib/firestore/types";
+import type { ClassDoc, CoverageStatus, CurriculumTopic, CurriculumUnit, MaterialDoc } from "@/lib/firestore/types";
 import type { CurriculumGraphOutput } from "@/lib/curriculumGraph";
+import type { IdentifiedMaterialSummary } from "@/lib/patternFinder";
 import { EvidenceBadge } from "@/components/class/WeightBars";
 
 const STATUS_DOT: Record<CoverageStatus, string> = {
@@ -17,15 +20,27 @@ const STATUS_DOT: Record<CoverageStatus, string> = {
   not_covered: "bg-zinc-300 dark:bg-zinc-700",
 };
 
+function toIdentifiedMaterialSummary(m: MaterialDoc): IdentifiedMaterialSummary {
+  return { id: m.id, ...toMaterialSummary(m) };
+}
+
 function StatusDot({ status }: { status: CoverageStatus }) {
   return <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[status]}`} aria-hidden />;
 }
 
-function ConceptRow({ concept }: { concept: { label: string; status: CoverageStatus } }) {
+function ConceptRow({ concept }: { concept: { label: string; status: CoverageStatus; materialIds: string[] } }) {
   return (
-    <li className="flex items-center gap-2 py-0.5 pl-6 text-xs text-zinc-600 dark:text-zinc-400">
+    <li className="flex items-center gap-1.5 py-0.5 pl-6 text-xs text-zinc-600 dark:text-zinc-400">
       <StatusDot status={concept.status} />
       {concept.label}
+      {concept.materialIds.length > 0 && (
+        <span
+          className="text-emerald-600 dark:text-emerald-400"
+          title={`Traced to ${concept.materialIds.length} material${concept.materialIds.length === 1 ? "" : "s"} in this class`}
+        >
+          ✓
+        </span>
+      )}
     </li>
   );
 }
@@ -87,16 +102,28 @@ export default function CurriculumGraphPanel({
     setBusy(true);
     setError(null);
     try {
+      const previousUnits = cls.curriculumGraph?.units ?? [];
       const [materials, profile] = await Promise.all([listMaterialsForClass(user.uid, cls.id), getUserProfile(user.uid)]);
       const { graph } = await callApi<{ graph: CurriculumGraphOutput }>("/api/curriculum-graph", {
         cls: toClassContext(cls),
         profile: toProfileContext(profile),
-        materials: materials.map(toMaterialSummary),
+        materials: materials.map(toIdentifiedMaterialSummary),
+        existingGraph: previousUnits,
       });
+
+      const units: CurriculumUnit[] = graph.units.map((u) => ({
+        label: u.label,
+        status: u.status,
+        topics: u.topics.map((t) => ({
+          label: t.label,
+          status: t.status,
+          concepts: t.concepts.map((c) => ({ label: c.label, status: c.status, materialIds: c.material_ids })),
+        })),
+      }));
 
       const saved = {
         evidenceStrength: graph.evidence_strength,
-        units: graph.units,
+        units,
         coverageSummary: graph.coverage_summary,
         gaps: graph.gaps,
         caveat: graph.caveat,
@@ -104,6 +131,22 @@ export default function CurriculumGraphPanel({
       };
       await saveCurriculumGraph(user.uid, cls.id, saved);
       onSaved(saved);
+
+      const changes = diffCurriculumCoverage(previousUnits, units);
+      if (changes.length) {
+        await recordClassUpdates(
+          user.uid,
+          changes.map((c) => ({
+            classId: cls.id,
+            className: `${cls.subject} · ${cls.teacherName}`,
+            topic: c.label,
+            fromLevel: c.fromLevel,
+            toLevel: c.toLevel,
+            reason: c.reason,
+            createdAt: new Date().toISOString(),
+          })),
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate curriculum graph");
     } finally {
