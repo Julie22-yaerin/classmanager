@@ -12,6 +12,7 @@ const LINKS = [
   { href: "/daily", label: "Daily" },
   { href: "/setup", label: "Classes" },
   { href: "/deadlines", label: "Deadlines" },
+  { href: "/predictions", label: "Predictions" },
   { href: "/profile", label: "Profile" },
   { href: "/settings", label: "Settings" },
 ];

@@ -187,3 +187,20 @@ export interface TeacherSimulationDoc {
   projectedScore: { baselineLow: number; baselineHigh: number; projectedLow: number; projectedHigh: number; caveat: string };
   createdAt: string;
 }
+
+export type PredictionSource = "examMode" | "teacherSimulator" | "patternFinder";
+export type PredictionStatus = "pending" | "correct" | "incorrect" | "partial";
+
+export interface PredictionDoc {
+  id: string;
+  classId: string;
+  className: string;
+  source: PredictionSource;
+  sourceReportId: string;
+  claim: string;
+  confidence: "high" | "medium" | "low";
+  status: PredictionStatus;
+  resolutionNote: string | null;
+  createdAt: string;
+  resolvedAt: string | null;
+}

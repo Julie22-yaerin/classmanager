@@ -7,7 +7,9 @@ import { toClassContext, toProfileContext, toMaterialSummary } from "@/lib/mappe
 import { listMaterialsForClass } from "@/lib/firestore/materials";
 import { createPatternReport, listPatternReports } from "@/lib/firestore/patternReports";
 import { recordClassUpdates } from "@/lib/firestore/classUpdates";
+import { recordPredictions } from "@/lib/firestore/predictions";
 import { findNewHighConfidencePatterns } from "@/lib/patternChanges";
+import { extractFromPatternReport } from "@/lib/predictionLedger";
 import { getUserProfile } from "@/lib/firestore/profile";
 import type { ClassDoc, MaterialDoc, PatternReportDoc } from "@/lib/firestore/types";
 import type { IdentifiedMaterialSummary, PatternReportOutput } from "@/lib/patternFinder";
@@ -146,6 +148,7 @@ export default function PatternFinderPanel({ cls, initialReports, hasPastExam }:
         caveat: report.caveat,
         createdAt: new Date().toISOString(),
       });
+      await recordPredictions(user.uid, extractFromPatternReport(report, saved.id, cls.id, `${cls.subject} · ${cls.teacherName}`));
 
       const newHighConfidence = findNewHighConfidencePatterns(previousPatterns, patterns);
       if (newHighConfidence.length) {
