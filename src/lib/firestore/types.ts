@@ -38,6 +38,34 @@ export interface TeacherPlaybook {
   generatedAt: string;
 }
 
+export type CoverageStatus = "covered" | "in_progress" | "not_covered";
+
+export interface CurriculumConcept {
+  label: string;
+  status: CoverageStatus;
+}
+
+export interface CurriculumTopic {
+  label: string;
+  status: CoverageStatus;
+  concepts: CurriculumConcept[];
+}
+
+export interface CurriculumUnit {
+  label: string;
+  status: CoverageStatus;
+  topics: CurriculumTopic[];
+}
+
+export interface CurriculumGraphDoc {
+  evidenceStrength: "high" | "medium" | "low";
+  units: CurriculumUnit[];
+  coverageSummary: string;
+  gaps: string[];
+  caveat: string;
+  updatedAt: string;
+}
+
 export interface ClassDoc {
   id: string;
   teacherName: string;
@@ -53,6 +81,7 @@ export interface ClassDoc {
   topicPriorities: TopicPriorityItem[];
   importantDates: ImportantDateItem[];
   playbook: TeacherPlaybook | null;
+  curriculumGraph: CurriculumGraphDoc | null;
 
   createdAt: string;
   updatedAt: string;

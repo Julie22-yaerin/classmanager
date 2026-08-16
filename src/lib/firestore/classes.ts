@@ -1,6 +1,6 @@
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { ClassDoc, TeacherPlaybook } from "@/lib/firestore/types";
+import type { ClassDoc, TeacherPlaybook, CurriculumGraphDoc } from "@/lib/firestore/types";
 import type { TopicPriorityItem, ImportantDateItem } from "@/lib/types";
 import { diffTopicPriorities } from "@/lib/topicChanges";
 import { recordClassUpdates } from "@/lib/firestore/classUpdates";
@@ -42,6 +42,7 @@ export async function createClass(uid: string, input: CreateClassInput): Promise
     topicPriorities: [],
     importantDates: [],
     playbook: null,
+    curriculumGraph: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -112,6 +113,10 @@ export async function saveTopicPriorities(uid: string, cls: ClassDoc, topicPrior
 
 export async function savePlaybook(uid: string, classId: string, playbook: TeacherPlaybook): Promise<void> {
   await updateDoc(classRef(uid, classId), { playbook, updatedAt: new Date().toISOString() });
+}
+
+export async function saveCurriculumGraph(uid: string, classId: string, curriculumGraph: CurriculumGraphDoc): Promise<void> {
+  await updateDoc(classRef(uid, classId), { curriculumGraph, updatedAt: new Date().toISOString() });
 }
 
 export interface UpdateClassInput {

@@ -18,6 +18,7 @@ const LIMITS: Record<string, number> = {
   "teacher-playbook": 5,
   "teacher-simulator": 5,
   "pattern-finder": 5,
+  "curriculum-graph": 5,
   "daily-mode": 10,
   "identify-class": 20,
 };
