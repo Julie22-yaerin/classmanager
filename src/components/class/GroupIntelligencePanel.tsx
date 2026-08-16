@@ -8,11 +8,27 @@ import { aggregateTopicWeights, type AggregatedTopic } from "@/lib/groupIntellig
 import { getUserProfile } from "@/lib/firestore/profile";
 import type { ClassDoc } from "@/lib/firestore/types";
 
+// Below 3 total contributors (you + at least 2 others), an average can be
+// inverted to reveal the other contributor's exact value once you subtract
+// your own — genuine anonymity only holds once there's more than one other
+// person's number folded into the sum.
+const MIN_CONTRIBUTORS = 3;
+
+function timeAgo(iso: string): string {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= 0) return "today";
+  if (days === 1) return "1 day ago";
+  if (days < 30) return `${days} days ago`;
+  const months = Math.floor(days / 30);
+  return `${months} month${months === 1 ? "" : "s"} ago`;
+}
+
 export default function GroupIntelligencePanel({ cls }: { cls: ClassDoc }) {
   const { user } = useAuth();
   const [loaded, setLoaded] = useState(false);
   const [optedIn, setOptedIn] = useState(false);
   const [contributorCount, setContributorCount] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [topics, setTopics] = useState<AggregatedTopic[]>([]);
 
   useEffect(() => {
@@ -28,6 +44,8 @@ export default function GroupIntelligencePanel({ cls }: { cls: ClassDoc }) {
         if (result) {
           setContributorCount(result.contributions.length);
           setTopics(aggregateTopicWeights(result.contributions));
+          const mostRecent = result.contributions.map((c) => c.contributedAt).sort().at(-1);
+          setLastUpdated(mostRecent ?? null);
         }
       }
       setLoaded(true);
@@ -52,19 +70,23 @@ export default function GroupIntelligencePanel({ cls }: { cls: ClassDoc }) {
   }
 
   const ownWeights = new Map(cls.topicPriorities.map((t) => [t.topic.trim().toLowerCase(), t.weight]));
+  const enoughContributors = contributorCount >= MIN_CONTRIBUTORS && topics.length > 0;
 
   return (
     <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="font-medium">Group Intelligence</h2>
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="font-medium">Group Intelligence</h2>
+        {lastUpdated && <span className="shrink-0 text-xs text-zinc-400">updated {timeAgo(lastUpdated)}</span>}
+      </div>
       <p className="mt-0.5 text-xs text-zinc-500">
         Topic priority averaged across {contributorCount} student{contributorCount === 1 ? "" : "s"} matched to this teacher, subject, and grade.
       </p>
 
-      {contributorCount <= 1 || topics.length === 0 ? (
+      {!enoughContributors ? (
         <p className="mt-3 text-sm text-zinc-500">
           {contributorCount === 0
             ? "No shared signal for this class yet — once you generate topic priorities, you'll be the first contributor."
-            : "You're the only one sharing signal for this class so far — check back once classmates opt in too."}
+            : `Needs at least ${MIN_CONTRIBUTORS} students sharing before an average is shown (currently ${contributorCount}) — with too few contributors, an average stops being anonymous.`}
         </p>
       ) : (
         <ul className="mt-3 flex flex-col gap-1.5 text-sm">

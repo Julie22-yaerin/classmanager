@@ -103,8 +103,8 @@ export default function PrivacyPage() {
           (a number 1–5) from your class memory is written to a shared record other opted-in students can read — never
           your reasons, evidence, materials, messages, or any other class content. Classes are matched across accounts
           by normalized teacher name, subject, and grade, which is approximate and not verified to be the literal same
-          class. Turning the toggle off stops new sharing; deleting your account also deletes everything you&apos;ve
-          previously contributed to every shared record.
+          class. Turning the toggle off withdraws everything you&apos;ve previously contributed, not just future
+          updates; deleting your account does the same.
         </p>
       </section>
 
