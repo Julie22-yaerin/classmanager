@@ -22,6 +22,11 @@ export async function listMaterialsForClass(uid: string, classId: string): Promi
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<MaterialDoc, "id">) })).sort(byCreatedAtDesc);
 }
 
+export async function listAllMaterials(uid: string): Promise<MaterialDoc[]> {
+  const snap = await getDocs(materialsRef(uid));
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<MaterialDoc, "id">) })).sort(byCreatedAtDesc);
+}
+
 export async function listRecentMaterialsByTag(uid: string, tag: Tag, take = 15): Promise<MaterialDoc[]> {
   const snap = await getDocs(query(materialsRef(uid), where("tag", "==", tag)));
   return snap.docs

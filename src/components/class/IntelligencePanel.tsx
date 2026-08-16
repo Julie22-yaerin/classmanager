@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/authContext";
 import { listTopicStates } from "@/lib/firestore/evidenceSignals";
 import { dominantComponent } from "@/lib/evidenceEngine";
+import PriorityPyramid from "@/components/class/PriorityPyramid";
 import type { TopicStateDoc, TpsTier, ConfidenceTier } from "@/lib/firestore/types";
 
 const VIEWS = ["map", "forecast", "move"] as const;
@@ -103,22 +104,25 @@ export default function IntelligencePanel({ classId }: { classId: string }) {
       </div>
 
       {view === "map" && (
-        <ul className="mt-4 flex flex-col gap-3">
-          {states.map((s) => (
-            <li key={s.id} className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-medium text-zinc-900 dark:text-zinc-50">{s.topicLabel}</span>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span className="text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{s.tps}</span>
-                  <TierBadge tier={s.tpsTier} />
+        <>
+          <PriorityPyramid states={states} />
+          <ul className="mt-2 flex flex-col gap-3">
+            {states.map((s) => (
+              <li key={s.id} className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-zinc-900 dark:text-zinc-50">{s.topicLabel}</span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{s.tps}</span>
+                    <TierBadge tier={s.tpsTier} />
+                  </div>
                 </div>
-              </div>
-              <p className="mt-1 text-xs text-zinc-500">
-                {s.signalCount} evidence signal{s.signalCount === 1 ? "" : "s"} · driven mainly by {dominantComponent(s)}
-              </p>
-            </li>
-          ))}
-        </ul>
+                <p className="mt-1 text-xs text-zinc-500">
+                  {s.signalCount} evidence signal{s.signalCount === 1 ? "" : "s"} · driven mainly by {dominantComponent(s)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
 
       {view === "forecast" && (

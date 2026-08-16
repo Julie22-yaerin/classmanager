@@ -4,15 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/authContext";
 import LaurelAvatar from "@/components/LaurelAvatar";
+import SidebarWidgets from "@/components/SidebarWidgets";
 
 const LINKS = [
   { href: "/app", label: "Chat" },
   { href: "/daily", label: "Daily" },
   { href: "/setup", label: "Classes" },
+  { href: "/materials", label: "Materials" },
 ];
 
-// Kept reachable but visually secondary: their content now lives directly on
-// the chat home screen as widgets, so these are just the "see everything" links.
+// Kept reachable but visually secondary: full detail views for the widgets
+// embedded below, plus Reference Room which has no widget of its own yet.
 const SECONDARY_LINKS = [
   { href: "/deadlines", label: "Deadlines" },
   { href: "/references", label: "Reference Room" },
@@ -74,6 +76,11 @@ export default function Sidebar() {
           );
         })}
       </nav>
+      {user && (
+        <div className="mt-3 min-h-0 flex-1 overflow-y-auto py-1">
+          <SidebarWidgets />
+        </div>
+      )}
       <div className="mt-auto px-2 py-3">
         {user && (
           <Link

@@ -242,7 +242,8 @@ export interface EvidenceSignalDoc {
   createdAt: string;
 }
 
-export type TpsTier = "Critical" | "High" | "Medium" | "Low" | "Minimal";
+export const TPS_TIERS = ["Critical", "High", "Medium", "Low", "Minimal"] as const;
+export type TpsTier = (typeof TPS_TIERS)[number];
 export type ConfidenceTier = "Very Strong" | "Strong" | "Moderate" | "Weak" | "Insufficient";
 
 // One per (classId, topicId) — recomputed in full from that topic's

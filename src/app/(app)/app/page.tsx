@@ -14,18 +14,11 @@ import { useAuth } from "@/lib/authContext";
 import { listClasses } from "@/lib/firestore/classes";
 import { getUserProfile } from "@/lib/firestore/profile";
 import { listMessages, createMessage } from "@/lib/firestore/messages";
-import { createMaterial } from "@/lib/firestore/materials";
-import { createDeadlines } from "@/lib/firestore/deadlines";
-import { applyMemoryUpdate, appendImportantDates } from "@/lib/firestore/classes";
-import { recordEvidenceSignals, recomputeTopicState } from "@/lib/firestore/evidenceSignals";
-import { recordReferenceItems } from "@/lib/firestore/referenceItems";
-import { clamp01 } from "@/lib/evidenceEngine";
 import { callApi } from "@/lib/apiClient";
-import { toClassContext, toProfileContext } from "@/lib/mappers";
+import { runAndPersistChatTurn } from "@/lib/chatPipeline";
 import type { ClassDoc, MessageDoc, UserProfile } from "@/lib/firestore/types";
-import type { RunChatResult } from "@/lib/aiChat";
 import type { RoutableClass, ClassRouterResult } from "@/lib/classRouter";
-import { slugifyTopic, type Tag, type Mode, type HomeworkMode } from "@/lib/types";
+import type { Tag, Mode, HomeworkMode } from "@/lib/types";
 
 interface PendingSend {
   tag: Tag;
@@ -125,112 +118,7 @@ export default function ChatPage() {
         createdAt: new Date().toISOString(),
       });
 
-      const result = await callApi<RunChatResult & { skippedProcessing?: boolean }>("/api/chat", {
-        cls: toClassContext(cls),
-        profile: toProfileContext(profile),
-        tag: payload.tag,
-        content: payload.content,
-        mode: payload.mode,
-        homeworkMode: payload.tag === "Homework" ? payload.homeworkMode : null,
-        attachment: payload.attachment,
-      });
-
-      let materialId: string | null = null;
-      if (!result.skippedProcessing) {
-        const material = await createMaterial(user.uid, {
-          classId,
-          className: `${cls.subject} · ${cls.teacherName}`,
-          tag: payload.tag,
-          sourceType: payload.attachment?.sourceType ?? "text",
-          rawContent: payload.content || null,
-          extractedText: result.usedTranscript,
-          topic: result.topic,
-          analysis: result.exam_analysis as unknown as Record<string, unknown> | null,
-          fileName: payload.attachment?.fileName ?? null,
-          mimeType: payload.attachment?.mimeType ?? null,
-          timeline: null,
-          createdAt: new Date().toISOString(),
-        });
-        materialId = material.id;
-
-        await applyMemoryUpdate(user.uid, classId, cls, result.memory_updates);
-        if (result.deadlines?.length) {
-          const sourceType = payload.tag === "Announcement" ? "announcement" : "recording";
-          const now = new Date().toISOString();
-          await createDeadlines(
-            user.uid,
-            result.deadlines.map((d) => ({
-              classId,
-              className: cls.subject,
-              teacherName: cls.teacherName,
-              title: d.title,
-              dueDate: d.due_date,
-              sourceType,
-              notes: d.notes ?? null,
-              done: false,
-              createdAt: now,
-            })),
-          );
-          await appendImportantDates(
-            user.uid,
-            classId,
-            cls,
-            result.deadlines.map((d) => ({ title: d.title, date: d.due_date, source: sourceType })),
-          );
-        }
-
-        if (result.evidence_signals?.length) {
-          // Evidence scoring is auxiliary to the chat reply — if it fails (a
-          // rules rejection, a size-limit violation, an offline client), the
-          // student should still get the reply the model already produced,
-          // not lose it because a background scoring write rejected.
-          try {
-            const evidenceNow = new Date().toISOString();
-            await recordEvidenceSignals(
-              user.uid,
-              result.evidence_signals.map((s) => ({
-                classId,
-                topicId: slugifyTopic(s.topic),
-                topicLabel: s.topic,
-                signalType: s.signal_type,
-                rawEvidence: s.raw_evidence,
-                normalizedEvidence: s.normalized_evidence,
-                strength: clamp01(s.strength),
-                specificity: clamp01(s.specificity),
-                extractionConfidence: clamp01(s.extraction_confidence),
-                sourceType: "chat",
-                materialId,
-                createdAt: evidenceNow,
-              })),
-            );
-            const touchedTopics = new Map(result.evidence_signals.map((s) => [slugifyTopic(s.topic), s.topic]));
-            await Promise.all([...touchedTopics].map(([topicId, topicLabel]) => recomputeTopicState(user.uid, classId, topicId, topicLabel)));
-          } catch (evidenceErr) {
-            console.error("evidence signal persistence failed", evidenceErr);
-          }
-        }
-
-        if (result.reference_suggestions?.length) {
-          try {
-            const referenceNow = new Date().toISOString();
-            await recordReferenceItems(
-              user.uid,
-              result.reference_suggestions.slice(0, 3).map((r) => ({
-                classId,
-                className: `${cls.subject} · ${cls.teacherName}`,
-                topic: r.topic,
-                title: r.title,
-                resourceType: r.resource_type,
-                description: r.description,
-                searchQuery: r.search_query,
-                createdAt: referenceNow,
-              })),
-            );
-          } catch (referenceErr) {
-            console.error("reference item persistence failed", referenceErr);
-          }
-        }
-      }
+      const { result, materialId } = await runAndPersistChatTurn(user.uid, cls, classId, profile, payload);
 
       const assistantMessage = await createMessage(user.uid, {
         classId,
