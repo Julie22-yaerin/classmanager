@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, getDocs, updateDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { PredictionDoc, PredictionStatus } from "@/lib/firestore/types";
 
@@ -12,6 +12,11 @@ function predictionRef(uid: string, id: string) {
 
 export async function listPredictions(uid: string): Promise<PredictionDoc[]> {
   const snap = await getDocs(predictionsRef(uid));
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<PredictionDoc, "id">) })).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function listPredictionsForClass(uid: string, classId: string): Promise<PredictionDoc[]> {
+  const snap = await getDocs(query(predictionsRef(uid), where("classId", "==", classId)));
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<PredictionDoc, "id">) })).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
