@@ -18,6 +18,7 @@ import { createMaterial } from "@/lib/firestore/materials";
 import { createDeadlines } from "@/lib/firestore/deadlines";
 import { applyMemoryUpdate, appendImportantDates } from "@/lib/firestore/classes";
 import { recordEvidenceSignals, recomputeTopicState } from "@/lib/firestore/evidenceSignals";
+import { recordReferenceItems } from "@/lib/firestore/referenceItems";
 import { clamp01 } from "@/lib/evidenceEngine";
 import { callApi } from "@/lib/apiClient";
 import { toClassContext, toProfileContext } from "@/lib/mappers";
@@ -206,6 +207,27 @@ export default function ChatPage() {
             await Promise.all([...touchedTopics].map(([topicId, topicLabel]) => recomputeTopicState(user.uid, classId, topicId, topicLabel)));
           } catch (evidenceErr) {
             console.error("evidence signal persistence failed", evidenceErr);
+          }
+        }
+
+        if (result.reference_suggestions?.length) {
+          try {
+            const referenceNow = new Date().toISOString();
+            await recordReferenceItems(
+              user.uid,
+              result.reference_suggestions.map((r) => ({
+                classId,
+                className: `${cls.subject} · ${cls.teacherName}`,
+                topic: r.topic,
+                title: r.title,
+                resourceType: r.resource_type,
+                description: r.description,
+                searchQuery: r.search_query,
+                createdAt: referenceNow,
+              })),
+            );
+          } catch (referenceErr) {
+            console.error("reference item persistence failed", referenceErr);
           }
         }
       }

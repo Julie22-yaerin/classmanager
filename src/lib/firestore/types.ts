@@ -1,4 +1,4 @@
-import type { Tag, Mode, HomeworkMode, SourceType, TopicPriorityItem, ImportantDateItem, SignalType } from "@/lib/types";
+import type { Tag, Mode, HomeworkMode, SourceType, TopicPriorityItem, ImportantDateItem, SignalType, ResourceType } from "@/lib/types";
 
 export interface UserProfile {
   email: string | null;
@@ -273,6 +273,23 @@ export interface TopicStateDoc {
 
   evidenceIds: string[];
   lastComputedAt: string;
+}
+
+// Reference Room: AI-suggested study resources, filed by class/topic/time so
+// they surface next to deadlines instead of scrolling away in chat history.
+// The AI never claims a specific URL/video exists (it can't browse the
+// internet) — searchQuery is a real, user-runnable search, not a fabricated
+// link, and the "open" action just runs that search.
+export interface ReferenceItemDoc {
+  id: string;
+  classId: string;
+  className: string;
+  topic: string;
+  title: string;
+  resourceType: ResourceType;
+  description: string;
+  searchQuery: string;
+  createdAt: string;
 }
 
 // Group Intelligence: shared, cross-student aggregate signals. These live

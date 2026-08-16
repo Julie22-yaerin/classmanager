@@ -1,5 +1,5 @@
 import type OpenAI from "openai";
-import { SIGNAL_TYPES, type SignalType } from "@/lib/types";
+import { SIGNAL_TYPES, type SignalType, RESOURCE_TYPES, type ResourceType } from "@/lib/types";
 
 /**
  * Every tag processor asks the model for the same shaped output via a
@@ -106,8 +106,26 @@ export const RESPOND_TOOL: OpenAI.Chat.Completions.ChatCompletionFunctionTool = 
             required: ["topic", "signal_type", "raw_evidence", "normalized_evidence", "strength", "specificity", "extraction_confidence"],
           },
         },
+        reference_suggestions: {
+          type: ["array", "null"],
+          description:
+            "Only when the student is asking to find a study resource (Reference tag): 1-3 suggested resources. You cannot browse the " +
+            "internet — never invent a URL or claim a specific video/article exists. Give a search query instead, so the student finds a " +
+            "real, current resource themselves. Omit entirely (null) otherwise.",
+          items: {
+            type: "object",
+            properties: {
+              topic: { type: "string", description: "The topic this resource is for." },
+              title: { type: "string", description: "A short, descriptive title for the suggestion (not a claimed real resource name)." },
+              resource_type: { type: "string", enum: [...RESOURCE_TYPES], description: "Kind of resource this is." },
+              description: { type: "string", description: "One sentence: why this fits the topic and this student." },
+              search_query: { type: "string", description: "A concrete, well-formed query to paste into a search engine or YouTube." },
+            },
+            required: ["topic", "title", "resource_type", "description", "search_query"],
+          },
+        },
       },
-      required: ["reply", "topic", "memory_updates", "deadlines", "exam_analysis", "evidence_signals"],
+      required: ["reply", "topic", "memory_updates", "deadlines", "exam_analysis", "evidence_signals", "reference_suggestions"],
     },
   },
 };
@@ -139,6 +157,15 @@ export interface RespondToolInput {
         strength: number;
         specificity: number;
         extraction_confidence: number;
+      }[]
+    | null;
+  reference_suggestions:
+    | {
+        topic: string;
+        title: string;
+        resource_type: ResourceType;
+        description: string;
+        search_query: string;
       }[]
     | null;
 }

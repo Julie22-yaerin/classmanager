@@ -78,6 +78,15 @@ service cloud.firestore {
         allow read, write: if isOwner(uid) && withinSize('topicLabel', 200);
       }
 
+      // Reference Room: AI-suggested study resources, filed by class/topic/time.
+      match /referenceItems/{referenceItemId} {
+        allow read, write: if isOwner(uid) &&
+          withinSize('title', 300) &&
+          withinSize('description', 1000) &&
+          withinSize('searchQuery', 500) &&
+          withinSize('topic', 200);
+      }
+
       // Private markers of which shared groupSignals/{fingerprint} docs this
       // user has contributed to, so account deletion can clean those up too.
       match /groupContributionRefs/{fingerprint} {

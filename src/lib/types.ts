@@ -1,4 +1,4 @@
-export const TAGS = ["Homework", "PastExam", "ClassRecording", "Material", "Notes", "Announcement"] as const;
+export const TAGS = ["Homework", "PastExam", "ClassRecording", "Material", "Notes", "Announcement", "Reference"] as const;
 
 export type Tag = (typeof TAGS)[number];
 
@@ -9,6 +9,7 @@ export const TAG_LABELS: Record<Tag, string> = {
   Material: "Material",
   Notes: "Notes",
   Announcement: "Announcement",
+  Reference: "Find a Resource",
 };
 
 export const TAG_DESCRIPTIONS: Record<Tag, string> = {
@@ -18,6 +19,7 @@ export const TAG_DESCRIPTIONS: Record<Tag, string> = {
   Material: "Index a handout, slide, or reading and file it into class knowledge.",
   Notes: "Save personal notes into class knowledge.",
   Announcement: "Extract a task/date/deadline and create a reminder.",
+  Reference: "Ask for study resources on a topic — saved to the Reference Room.",
 };
 
 export function isTag(value: unknown): value is Tag {
@@ -73,6 +75,9 @@ export const SIGNAL_TYPES = [
   "OTHER",
 ] as const;
 export type SignalType = (typeof SIGNAL_TYPES)[number];
+
+export const RESOURCE_TYPES = ["video", "article", "practice", "textbook", "other"] as const;
+export type ResourceType = (typeof RESOURCE_TYPES)[number];
 
 export function slugifyTopic(label: string): string {
   const slug = label
